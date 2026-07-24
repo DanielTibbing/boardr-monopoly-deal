@@ -1,6 +1,17 @@
 import { useState } from 'react'
 import type { PhoneUiProps } from '@boardr/sdk'
-import { COLOR_LABEL, COLORS, rentFor, SET_SIZE, type Card, type Color } from './deck'
+import {
+  canBuildOn,
+  COLOR_LABEL,
+  COLORS,
+  HOTEL_RENT,
+  HOUSE_RENT,
+  rentFor,
+  setComplete,
+  SET_SIZE,
+  type Card,
+  type Color,
+} from './deck'
 import { CardChip, COLOR_HEX, inkOn } from './cardUi'
 import type { MDPublic } from './logic'
 import './phone.css'
@@ -222,6 +233,23 @@ export default function Phone({ playerID, view, meta, dispatch }: PhoneUiProps<P
     if (card.kind === 'rent') {
       btns.push(<button key="rt" className="mdp-btn mdp-primary" onClick={() => setFlow({ action: 'rent', cardId: card.id })}>Charge rent…</button>)
     }
+    if (card.action === 'house') {
+      const spots = COLORS.filter((c) => canBuildOn(c) && setComplete(c, p.properties[me]![c]!.length) && !p.buildings[me]![c]!.house)
+      for (const c of spots) {
+        btns.push(<button key={`h-${c}`} className="mdp-btn mdp-primary" onClick={() => void act('playHouse', { cardId: card.id, color: c })}>House on {COLOR_LABEL[c]}</button>)
+      }
+      if (spots.length === 0) btns.push(<span key="hn" className="mdp-muted">no completed street set to build on</span>)
+    }
+    if (card.action === 'hotel') {
+      const spots = COLORS.filter((c) => p.buildings[me]![c]!.house && !p.buildings[me]![c]!.hotel)
+      for (const c of spots) {
+        btns.push(<button key={`ho-${c}`} className="mdp-btn mdp-primary" onClick={() => void act('playHotel', { cardId: card.id, color: c })}>Hotel on {COLOR_LABEL[c]}</button>)
+      }
+      if (spots.length === 0) btns.push(<span key="hon" className="mdp-muted">need a set with a house first</span>)
+    }
+    if (card.action === 'doubleRent') {
+      btns.push(<span key="dn" className="mdp-muted">play alongside a Rent card (offered when you charge rent)</span>)
+    }
     return <div className="mdp-cardactions">{btns}</div>
   }
 
@@ -303,23 +331,46 @@ export default function Phone({ playerID, view, meta, dispatch }: PhoneUiProps<P
     }
     if (f.action === 'rent') {
       const card = myHand.find((c) => c.id === f.cardId)!
+      const rentAmt = (c: Color): number => {
+        const count = p.properties[me]![c]!.length
+        let a = rentFor(c, count)
+        if (setComplete(c, count)) {
+          if (p.buildings[me]![c]!.house) a += HOUSE_RENT
+          if (p.buildings[me]![c]!.hotel) a += HOTEL_RENT
+        }
+        return a
+      }
       if (!f.color) {
         const choices = (card.rentAny ? COLORS : card.rentColors!).filter((c) => p.properties[me]![c]!.length > 0)
         return (
           <FlowStep label="Charge rent for which colour?" cancel={cancel} err={err}>
             {choices.length === 0 && <p className="mdp-muted">you own no matching property</p>}
             {choices.map((c) => (
-              <button key={c} className="mdp-btn" style={{ background: COLOR_HEX[c], color: inkOn(c) }} onClick={() => {
-                if (card.rentAny) setFlow({ ...f, color: c })
-                else void act('playRent', { cardId: f.cardId, color: c })
-              }}>
-                {COLOR_LABEL[c]} — ${rentFor(c, p.properties[me]![c]!.length)}M
+              <button key={c} className="mdp-btn" style={{ background: COLOR_HEX[c], color: inkOn(c) }} onClick={() => setFlow({ ...f, color: c })}>
+                {COLOR_LABEL[c]} — ${rentAmt(c)}M
               </button>
             ))}
           </FlowStep>
         )
       }
-      return pickOpponent('Charge which opponent?', (target) => void act('playRent', { cardId: f.cardId, color: f.color, target }))
+      if (card.rentAny && !f.target) {
+        return pickOpponent('Charge which opponent?', (target) => setFlow({ ...f, target }))
+      }
+      // confirm — with an optional Double the Rent (uses a second play)
+      const amount = rentAmt(f.color)
+      const dbl = myHand.find((c) => c.action === 'doubleRent')
+      const canDouble = !!dbl && p.playsMade + 2 <= 3
+      const rentArgs = { cardId: f.cardId, color: f.color, target: f.target }
+      return (
+        <FlowStep label={`Charge $${amount}M rent?`} cancel={cancel} err={err}>
+          <button className="mdp-btn mdp-primary" onClick={() => void act('playRent', rentArgs)}>Charge ${amount}M</button>
+          {canDouble && (
+            <button className="mdp-btn mdp-jsn" onClick={() => void act('playRent', { ...rentArgs, doubleCardId: dbl!.id })}>
+              Double the Rent → ${amount * 2}M
+            </button>
+          )}
+        </FlowStep>
+      )
     }
     return <div />
   }

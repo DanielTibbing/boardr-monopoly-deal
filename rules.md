@@ -26,8 +26,13 @@ Cards placed on the table never return to your hand. Wildcards can be freely mov
 - **It's My Birthday** — every opponent pays you $2M.
 - **Sly Deal** — steal one property from an incomplete set.
 - **Forced Deal** — swap one of your properties for an opponent's (neither from a completed set).
-- **Deal Breaker** — steal an entire completed set.
+- **Deal Breaker** — steal an entire completed set (its House/Hotel comes too).
+- **House** — add to one of your **completed** street sets (not railroads or utilities) for +$3M rent.
+- **Hotel** — add to a set that already has a House for a further +$4M rent.
+- **Double the Rent** — play it with a Rent card to double the charge. It uses a **second** play, so you need two plays left that turn.
 - **Just Say No** — cancel an action played against you. It can be played in response even when it isn't your turn, doesn't use a play, and can be countered by another Just Say No.
+
+If a set with a House or Hotel is broken up or paid away, the building can't stay — it drops into your bank as cash. (A Deal Breaker takes the building along with the set.)
 
 # Paying
 

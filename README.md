@@ -4,8 +4,6 @@ The fast, brutal card game of building property sets and raiding your rivals. Ba
 
 Built with [@boardr/sdk](https://www.npmjs.com/package/@boardr/sdk) for the [boardr](https://danieltibbing.github.io/boardr-community-contribs/) digital boardgame table.
 
-Core version: House, Hotel, and Double the Rent are deferred to a follow-up.
-
 ## Develop
 
 ```sh

@@ -13,8 +13,11 @@ import {
   ACTION_LABEL,
   bankable,
   buildDeck,
+  canBuildOn,
   COLOR_LABEL,
   COLORS,
+  HOTEL_RENT,
+  HOUSE_RENT,
   rentFor,
   setComplete,
   type ActionType,
@@ -74,6 +77,8 @@ export interface MDPublic {
   discardCount: number
   bank: Record<PlayerID, Card[]>
   properties: Record<PlayerID, Record<Color, Card[]>>
+  /** houses/hotels sitting on each completed set */
+  buildings: Record<PlayerID, Record<Color, { house: Card | null; hotel: Card | null }>>
   handCounts: Record<PlayerID, number>
   pending: Pending | null
   setsWon: Record<PlayerID, number>
@@ -104,6 +109,42 @@ function nextPlayer(ctx: WithPlayers, from: PlayerID): PlayerID {
 
 function emptyProps(): Record<Color, Card[]> {
   return Object.fromEntries(COLORS.map((c) => [c, [] as Card[]])) as Record<Color, Card[]>
+}
+
+function emptyBuildings(): Record<Color, { house: Card | null; hotel: Card | null }> {
+  return Object.fromEntries(COLORS.map((c) => [c, { house: null, hotel: null }])) as Record<
+    Color,
+    { house: Card | null; hotel: Card | null }
+  >
+}
+
+/** rent for a colour, including any house/hotel bonus once the set is complete */
+function rentAmount(state: MDState, player: PlayerID, color: Color): number {
+  const count = state.public.properties[player]![color]!.length
+  let amount = rentFor(color, count)
+  if (setComplete(color, count)) {
+    const b = state.public.buildings[player]![color]!
+    if (b.house) amount += HOUSE_RENT
+    if (b.hotel) amount += HOTEL_RENT
+  }
+  return amount
+}
+
+/**
+ * A set that is no longer complete can't hold buildings — the house/hotel drop
+ * into the owner's bank as cash (faithful to "move it or bank it"). Call after
+ * any card leaves one of a player's colour sets.
+ */
+function demolishIfBroken(state: MDState, player: PlayerID, color: Color): void {
+  const count = state.public.properties[player]![color]!.length
+  if (setComplete(color, count)) return
+  const b = state.public.buildings[player]![color]!
+  for (const key of ['hotel', 'house'] as const) {
+    if (b[key]) {
+      state.public.bank[player]!.push(b[key]!)
+      b[key] = null
+    }
+  }
 }
 
 function completeSets(state: MDState, player: PlayerID): number {
@@ -219,6 +260,7 @@ function applyToTarget(state: MDState, ctx: Ctx, target: PlayerID): void {
       pub.properties[target]![found.color] = pub.properties[target]![found.color]!.filter(
         (c) => c.id !== kind.cardId,
       )
+      demolishIfBroken(state, target, found.color)
       receiveCard(state, by, found.card, found.color)
     }
     finishTarget(state, ctx)
@@ -234,6 +276,8 @@ function applyToTarget(state: MDState, ctx: Ctx, target: PlayerID): void {
       )
       receiveCard(state, target, mine.card, mine.color)
       receiveCard(state, by, theirs.card, theirs.color)
+      demolishIfBroken(state, by, mine.color)
+      demolishIfBroken(state, target, theirs.color)
     }
     finishTarget(state, ctx)
     return
@@ -243,6 +287,13 @@ function applyToTarget(state: MDState, ctx: Ctx, target: PlayerID): void {
     const stolen = pub.properties[target]![color]!
     pub.properties[target]![color] = []
     for (const card of stolen) pub.properties[by]![color]!.push(card)
+    // Deal Breaker takes the set whole, buildings and all
+    const fromB = pub.buildings[target]![color]!
+    const toB = pub.buildings[by]![color]!
+    toB.house = fromB.house
+    toB.hotel = fromB.hotel
+    fromB.house = null
+    fromB.hotel = null
     finishTarget(state, ctx)
     return
   }
@@ -316,6 +367,7 @@ export default defineGame<MDState>({
         discardCount: 0,
         bank: Object.fromEntries(players.map((p) => [p, [] as Card[]])),
         properties: Object.fromEntries(players.map((p) => [p, emptyProps()])),
+        buildings: Object.fromEntries(players.map((p) => [p, emptyBuildings()])),
         handCounts: Object.fromEntries(players.map((p) => [p, 0])),
         pending: null,
         setsWon: Object.fromEntries(players.map((p) => [p, 0])),
@@ -418,6 +470,58 @@ export default defineGame<MDState>({
       },
     },
 
+    /** put a House on one of your completed street sets (+$3M rent) */
+    playHouse: {
+      canMove: (state, ctx) =>
+        state.public.phase === 'playing' &&
+        ctx.playerID === state.public.turnPlayer &&
+        state.public.playsMade < MAX_PLAYS &&
+        (state.secret[ctx.playerID]?.hand ?? []).some((c) => c.action === 'house'),
+      move: (state, ctx, args) => {
+        requireTurn(state, ctx)
+        const { cardId, color } = (args ?? {}) as { cardId?: string; color?: Color }
+        const card = state.secret[ctx.playerID]!.hand.find((c) => c.id === cardId && c.action === 'house')
+        if (!card) return ctx.invalid('no House selected')
+        if (!color || !canBuildOn(color)) return ctx.invalid('houses go on street sets, not railroads or utilities')
+        if (!setComplete(color, state.public.properties[ctx.playerID]![color]!.length)) {
+          return ctx.invalid(`complete your ${COLOR_LABEL[color]} set before building on it`)
+        }
+        if (state.public.buildings[ctx.playerID]![color]!.house) return ctx.invalid('that set already has a house')
+        takeFromHand(state, ctx.playerID, card.id)
+        state.public.buildings[ctx.playerID]![color]!.house = card
+        state.public.playsMade++
+        state.public.lastEvent = `${ctx.playerID} built a house on ${COLOR_LABEL[color]}`
+        syncCounts(state, ctx)
+      },
+    },
+
+    /** put a Hotel on a completed set that already has a house (+$4M rent) */
+    playHotel: {
+      canMove: (state, ctx) =>
+        state.public.phase === 'playing' &&
+        ctx.playerID === state.public.turnPlayer &&
+        state.public.playsMade < MAX_PLAYS &&
+        (state.secret[ctx.playerID]?.hand ?? []).some((c) => c.action === 'hotel'),
+      move: (state, ctx, args) => {
+        requireTurn(state, ctx)
+        const { cardId, color } = (args ?? {}) as { cardId?: string; color?: Color }
+        const card = state.secret[ctx.playerID]!.hand.find((c) => c.id === cardId && c.action === 'hotel')
+        if (!card) return ctx.invalid('no Hotel selected')
+        if (!color || !canBuildOn(color)) return ctx.invalid('hotels go on street sets only')
+        if (!setComplete(color, state.public.properties[ctx.playerID]![color]!.length)) {
+          return ctx.invalid('that set is not complete')
+        }
+        const b = state.public.buildings[ctx.playerID]![color]!
+        if (!b.house) return ctx.invalid('build a house before a hotel')
+        if (b.hotel) return ctx.invalid('that set already has a hotel')
+        takeFromHand(state, ctx.playerID, card.id)
+        b.hotel = card
+        state.public.playsMade++
+        state.public.lastEvent = `${ctx.playerID} built a hotel on ${COLOR_LABEL[color]}`
+        syncCounts(state, ctx)
+      },
+    },
+
     // --- targeted actions (open a response window) --------------------------
     debtCollector: {
       canMove: (state, ctx) =>
@@ -471,18 +575,28 @@ export default defineGame<MDState>({
         (state.secret[ctx.playerID]?.hand ?? []).some((c) => c.kind === 'rent'),
       move: (state, ctx, args) => {
         requireTurn(state, ctx)
-        const { cardId, color, target } = (args ?? {}) as {
+        const { cardId, color, target, doubleCardId } = (args ?? {}) as {
           cardId?: string
           color?: Color
           target?: PlayerID
+          doubleCardId?: string
         }
         const card = state.secret[ctx.playerID]!.hand.find((c) => c.id === cardId && c.kind === 'rent')
         if (!card) return ctx.invalid('no Rent card selected')
         const choices = card.rentAny ? COLORS : (card.rentColors ?? [])
         if (!color || !choices.includes(color)) return ctx.invalid('choose a colour this rent card covers')
-        const count = state.public.properties[ctx.playerID]![color]!.length
-        const amount = rentFor(color, count)
+        let amount = rentAmount(state, ctx.playerID, color)
         if (amount <= 0) return ctx.invalid(`you own no ${COLOR_LABEL[color]} property to charge rent on`)
+
+        // Double the Rent: a second card played alongside — it uses a 2nd play
+        const dbl = doubleCardId
+          ? state.secret[ctx.playerID]!.hand.find((c) => c.id === doubleCardId && c.action === 'doubleRent')
+          : undefined
+        if (doubleCardId && !dbl) return ctx.invalid('no Double the Rent card to add')
+        const playsNeeded = dbl ? 2 : 1
+        if (state.public.playsMade + playsNeeded > MAX_PLAYS) {
+          return ctx.invalid('Double the Rent needs two plays available this turn')
+        }
 
         let targets: PlayerID[]
         if (card.rentAny) {
@@ -495,9 +609,14 @@ export default defineGame<MDState>({
         }
         takeFromHand(state, ctx.playerID, card.id)
         state.internal!.discard.push(card)
-        state.public.playsMade++
+        if (dbl) {
+          takeFromHand(state, ctx.playerID, dbl.id)
+          state.internal!.discard.push(dbl)
+          amount *= 2
+        }
+        state.public.playsMade += playsNeeded
         openWindow(state, ctx.playerID, 'rent', targets, amount, { type: 'charge' }, '')
-        state.public.lastEvent = `${ctx.playerID} charged ${COLOR_LABEL[color]} rent ($${amount}M)`
+        state.public.lastEvent = `${ctx.playerID} charged ${COLOR_LABEL[color]} rent ($${amount}M${dbl ? ', doubled' : ''})`
         syncCounts(state, ctx)
       },
     },
@@ -662,6 +781,7 @@ export default defineGame<MDState>({
           return ctx.invalid(`that is only $${total}M of the $${pend.amount}M owed`)
         }
 
+        const brokenColors = new Set<Color>()
         for (const card of chosen) {
           const inBank = state.public.bank[payer]!.some((c) => c.id === card.id)
           if (inBank) {
@@ -672,9 +792,11 @@ export default defineGame<MDState>({
             state.public.properties[payer]![found.color] = state.public.properties[payer]![
               found.color
             ]!.filter((c) => c.id !== card.id)
+            brokenColors.add(found.color)
             receiveCard(state, pend.by, card, found.color)
           }
         }
+        for (const color of brokenColors) demolishIfBroken(state, payer, color)
         state.public.lastEvent = `${payer} paid ${pend.by} $${total}M`
         finishTarget(state, ctx)
         syncCounts(state, ctx)

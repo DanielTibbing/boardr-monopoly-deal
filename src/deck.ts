@@ -93,6 +93,9 @@ export type ActionType =
   | 'debtCollector'
   | 'birthday'
   | 'justSayNo'
+  | 'house'
+  | 'hotel'
+  | 'doubleRent'
 
 export const ACTION_LABEL: Record<ActionType, string> = {
   passGo: 'Pass Go',
@@ -102,6 +105,18 @@ export const ACTION_LABEL: Record<ActionType, string> = {
   debtCollector: 'Debt Collector',
   birthday: "It's My Birthday",
   justSayNo: 'Just Say No',
+  house: 'House',
+  hotel: 'Hotel',
+  doubleRent: 'Double the Rent',
+}
+
+/** rent bonus a building adds to a completed set */
+export const HOUSE_RENT = 3
+export const HOTEL_RENT = 4
+
+/** houses/hotels go on street colours only — never railroads or utilities */
+export function canBuildOn(color: Color): boolean {
+  return color !== 'railroad' && color !== 'utility'
 }
 
 export type CardKind = 'money' | 'property' | 'wild' | 'rent' | 'action'
@@ -203,6 +218,9 @@ export function buildDeck(): Card[] {
     ['debtCollector', 3, 3],
     ['birthday', 2, 3],
     ['justSayNo', 4, 3],
+    ['house', 3, 3],
+    ['hotel', 4, 3],
+    ['doubleRent', 1, 2],
   ]
   for (const [action, value, n] of actions) {
     for (let i = 0; i < n; i++) {

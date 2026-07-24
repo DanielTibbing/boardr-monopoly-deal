@@ -43,7 +43,7 @@ describe('setup & turn basics', () => {
     expect(p.handCounts['p0']).toBe(7) // 5 dealt + 2 drawn
     expect(p.handCounts['p1']).toBe(5)
     expect(p.handCounts['p2']).toBe(5)
-    expect(p.deckCount).toBe(99 - 5 * 3 - 2)
+    expect(p.deckCount).toBe(107 - 5 * 3 - 2)
   })
 
   it('never leaks hands or the deck to the board or other players', () => {
@@ -293,6 +293,93 @@ describe('rent & winning', () => {
     expect(pub(m).properties['p0']!.yellow).toHaveLength(1)
     // can't move to a colour the card doesn't allow
     expect(m.dispatch('moveWild', { cardId: 'w1', color: 'green' }, 'p0')).toMatchObject({ ok: false })
+  })
+
+  it('House and Hotel add rent to a completed set', () => {
+    const m = craft(2, (s) => {
+      s.secret['p0']!.hand = [action('house', 3), action('hotel', 4), { id: 'r1', kind: 'rent', value: 1, name: 'rent', rentColors: ['green', 'darkblue'] }]
+      setProps(s, 'p0', 'green', [prop('green'), prop('green'), prop('green')]) // complete (rent 7)
+      s.public.bank['p1'] = [money(10), money(5)]
+    })
+    expect(m.dispatch('playHouse', { cardId: hand(m, 'p0')[0]!.id, color: 'green' }, 'p0').ok).toBe(true)
+    expect(m.dispatch('playHotel', { cardId: hand(m, 'p0')[0]!.id, color: 'green' }, 'p0').ok).toBe(true)
+    // rent for a full green set is 7, +3 house +4 hotel = 14
+    m.dispatch('playRent', { cardId: 'r1', color: 'green' }, 'p0')
+    expect(pub(m).pending!.amount).toBe(14)
+  })
+
+  it('House needs a completed street set — not railroads', () => {
+    const m = craft(2, (s) => {
+      s.secret['p0']!.hand = [action('house', 3)]
+      setProps(s, 'p0', 'railroad', [prop('railroad'), prop('railroad'), prop('railroad'), prop('railroad')])
+      setProps(s, 'p0', 'green', [prop('green')]) // incomplete
+    })
+    const id = hand(m, 'p0')[0]!.id
+    expect(m.dispatch('playHouse', { cardId: id, color: 'railroad' }, 'p0')).toMatchObject({ ok: false })
+    expect(m.dispatch('playHouse', { cardId: id, color: 'green' }, 'p0')).toMatchObject({ ok: false })
+  })
+
+  it('Deal Breaker steals a completed set together with its house', () => {
+    const m = craft(2, (s) => {
+      s.secret['p0']!.hand = [action('dealBreaker', 5)]
+      setProps(s, 'p1', 'brown', [prop('brown'), prop('brown')])
+      s.public.buildings['p1']!.brown = { house: action('house', 3), hotel: null }
+    })
+    m.dispatch('dealBreaker', { cardId: hand(m, 'p0')[0]!.id, target: 'p1', color: 'brown' }, 'p0')
+    m.dispatch('accept', undefined, 'p1')
+    expect(pub(m).properties['p0']!.brown).toHaveLength(2)
+    expect(pub(m).buildings['p0']!.brown.house).not.toBeNull()
+    expect(pub(m).buildings['p1']!.brown.house).toBeNull()
+  })
+
+  it('paying with a property from a built set banks the building for the payer', () => {
+    const m = craft(2, (s) => {
+      s.secret['p0']!.hand = [action('debtCollector')]
+      // p1 has a completed brown set with a house, and nothing else to pay
+      setProps(s, 'p1', 'brown', [prop('brown'), prop('brown')])
+      s.public.buildings['p1']!.brown = { house: action('house', 3), hotel: null }
+    })
+    m.dispatch('debtCollector', { cardId: hand(m, 'p0')[0]!.id, target: 'p1' }, 'p0')
+    m.dispatch('accept', undefined, 'p1')
+    // the house can't be handed over directly; paying the browns empties the
+    // set (that's all p1 has for the $5M), so the house drops into p1's bank
+    const brownIds = pub(m).properties['p1']!.brown.map((c) => c.id)
+    m.dispatch('pay', { cardIds: brownIds }, 'p1')
+    expect(pub(m).buildings['p1']!.brown.house).toBeNull()
+    expect(pub(m).bank['p1']!.some((c) => c.action === 'house')).toBe(true)
+    expect(pub(m).properties['p0']!.brown).toHaveLength(2) // browns went to the creditor
+  })
+
+  it('Double the Rent doubles the charge and uses a second play', () => {
+    const m = craft(2, (s) => {
+      s.secret['p0']!.hand = [
+        { id: 'r1', kind: 'rent', value: 1, name: 'rent', rentColors: ['green', 'darkblue'] },
+        action('doubleRent', 1),
+      ]
+      setProps(s, 'p0', 'green', [prop('green'), prop('green')]) // rent 4
+      s.public.bank['p1'] = [money(10)]
+    })
+    const dbl = hand(m, 'p0').find((c) => c.action === 'doubleRent')!.id
+    m.dispatch('playRent', { cardId: 'r1', color: 'green', doubleCardId: dbl }, 'p0')
+    expect(pub(m).pending!.amount).toBe(8) // 4 × 2
+    expect(pub(m).playsMade).toBe(2) // rent + double
+  })
+
+  it('Double the Rent is refused without two plays left', () => {
+    const m = craft(2, (s) => {
+      s.public.playsMade = 2 // only one play remaining
+      s.secret['p0']!.hand = [
+        { id: 'r2', kind: 'rent', value: 1, name: 'rent', rentColors: ['green', 'darkblue'] },
+        action('doubleRent', 1),
+      ]
+      setProps(s, 'p0', 'green', [prop('green'), prop('green')])
+    })
+    const dbl = hand(m, 'p0').find((c) => c.action === 'doubleRent')!.id
+    expect(m.dispatch('playRent', { cardId: 'r2', color: 'green', doubleCardId: dbl }, 'p0')).toMatchObject({
+      ok: false,
+    })
+    // but a plain rent (one play) still works
+    expect(m.dispatch('playRent', { cardId: 'r2', color: 'green' }, 'p0').ok).toBe(true)
   })
 
   it('the game ends the moment a player completes a third set', () => {

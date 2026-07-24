@@ -9,12 +9,14 @@ type BoardView = { public: MDPublic }
 function Tableau({
   bank,
   properties,
+  buildings,
   name,
   active,
   sets,
 }: {
   bank: Card[]
   properties: Record<Color, Card[]>
+  buildings: Record<Color, { house: Card | null; hotel: Card | null }>
   name: string
   active: boolean
   sets: number
@@ -44,6 +46,8 @@ function Tableau({
               <span className="md-set-count">
                 {have}/{SET_SIZE[c]}
                 {full ? ' ✓' : ''}
+                {buildings[c].house ? ' 🏠' : ''}
+                {buildings[c].hotel ? '🏨' : ''}
               </span>
             </div>
           )
@@ -99,6 +103,7 @@ export default function Board({ view, meta }: BoardUiProps<BoardView>): React.JS
             name={pl.name}
             bank={p.bank[pl.id] ?? []}
             properties={p.properties[pl.id]!}
+            buildings={p.buildings[pl.id]!}
             active={pl.id === p.turnPlayer}
             sets={p.setsWon[pl.id] ?? 0}
           />

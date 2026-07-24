@@ -10,9 +10,9 @@ function counts(deck: Card[]): Record<string, number> {
 describe('deck', () => {
   it('builds the core deck with unique ids and the right kind counts', () => {
     const deck = buildDeck()
-    // money 20, property 28, wild 11, action 27 (core: no House/Hotel/DoubleRent), rent 13
-    expect(counts(deck)).toEqual({ money: 20, property: 28, wild: 11, action: 27, rent: 13 })
-    expect(deck).toHaveLength(20 + 28 + 11 + 27 + 13)
+    // money 20, property 28, wild 11, action 35 (+House 3, Hotel 3, DoubleRent 2), rent 13
+    expect(counts(deck)).toEqual({ money: 20, property: 28, wild: 11, action: 35, rent: 13 })
+    expect(deck).toHaveLength(20 + 28 + 11 + 35 + 13)
     expect(new Set(deck.map((c) => c.id)).size).toBe(deck.length)
   })
 

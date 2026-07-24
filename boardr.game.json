@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "io.github.danieltibbing.monopolydeal",
   "name": "Monopoly Deal",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "minPlayers": 2,
   "maxPlayers": 5,
   "phoneMode": "required",
@@ -12,8 +12,13 @@
     "boardUi": "dist/board.js",
     "phoneUi": "dist/phone.js"
   },
-  "description": "The fast card game: bank money, build property sets, and raid your rivals with Rent, Sly Deal, and Deal Breaker — first to three complete sets wins. Just Say No to fight back.",
-  "tags": ["cards", "strategy", "family", "take-that"],
+  "description": "The fast card game: bank money, build property sets with houses and hotels, and raid rivals with Rent, Sly Deal, and Deal Breaker — first to three complete sets wins. Just Say No to fight back.",
+  "tags": [
+    "cards",
+    "strategy",
+    "family",
+    "take-that"
+  ],
   "icon": "icon.svg",
   "rules": "rules.md"
 }
