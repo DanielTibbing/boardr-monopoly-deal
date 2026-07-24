@@ -1,6 +1,7 @@
 import type { BoardUiProps } from '@boardr/sdk'
-import { COLOR_LABEL, COLORS, SET_SIZE, type Card, type Color } from './deck'
-import { CardChip, COLOR_HEX, inkOn } from './cardUi'
+import { Seat } from '@boardr/sdk/ui'
+import { COLOR_LABEL, COLORS, SET_SIZE, rentFor, HOUSE_RENT, HOTEL_RENT, type Card, type Color } from './deck'
+import { CardChip, COLOR_HEX, inkOn, HouseIcon, HotelIcon } from './cardUi'
 import type { MDPublic } from './logic'
 import './board.css'
 
@@ -34,6 +35,11 @@ function Tableau({
         {COLORS.filter((c) => properties[c].length > 0).map((c) => {
           const have = properties[c].length
           const full = have >= SET_SIZE[c]
+          let rentVal = rentFor(c, have)
+          if (full) {
+            if (buildings[c].house) rentVal += HOUSE_RENT
+            if (buildings[c].hotel) rentVal += HOTEL_RENT
+          }
           return (
             <div
               key={c}
@@ -44,15 +50,23 @@ function Tableau({
                 {COLOR_LABEL[c]}
               </span>
               <span className="md-set-count">
-                {have}/{SET_SIZE[c]}
-                {full ? ' ✓' : ''}
-                {buildings[c].house ? ' 🏠' : ''}
-                {buildings[c].hotel ? '🏨' : ''}
+                {have}/{SET_SIZE[c]} · ${rentVal}M
+                {buildings[c].house && <HouseIcon size={13} />}
+                {buildings[c].hotel && <HotelIcon size={13} />}
               </span>
             </div>
           )
         })}
         {COLORS.every((c) => properties[c].length === 0) && <span className="md-muted">no property yet</span>}
+      </div>
+      <div className="md-bank-row">
+        <span className="md-bank-label">Bank (${bankTotal}M):</span>
+        <div className="md-chips">
+          {bank.map((card) => (
+            <CardChip key={card.id} card={card} size="sm" />
+          ))}
+          {bank.length === 0 && <span className="md-muted">empty</span>}
+        </div>
       </div>
     </div>
   )
@@ -83,46 +97,35 @@ export default function Board({ view, meta }: BoardUiProps<BoardView>): React.JS
         <span>First to 3 sets wins</span>
       </header>
 
-      {pend ? (
-        <div className="md-pending">
-          <strong>{p.lastEvent}</strong>
-          <span className="md-muted">
-            {pend.stage === 'block'
-              ? `waiting on ${name(pend.decider)}${pend.jsn > 0 ? ` — ${pend.jsn} × Just Say No` : ''}`
-              : `${name(pend.targets[0]!)} is paying $${pend.amount}M`}
-          </span>
-        </div>
-      ) : (
-        p.lastEvent && <div className="md-log">{p.lastEvent}</div>
-      )}
-
       <section className="md-seats">
-        {players.map((pl) => (
-          <Tableau
-            key={pl.id}
-            name={pl.name}
-            bank={p.bank[pl.id] ?? []}
-            properties={p.properties[pl.id]!}
-            buildings={p.buildings[pl.id]!}
-            active={pl.id === p.turnPlayer}
-            sets={p.setsWon[pl.id] ?? 0}
-          />
+        {players.map((pl, idx) => (
+          <Seat key={pl.id} index={idx} count={players.length}>
+            <Tableau
+              name={pl.name}
+              bank={p.bank[pl.id] ?? []}
+              properties={p.properties[pl.id]!}
+              buildings={p.buildings[pl.id]!}
+              active={pl.id === p.turnPlayer}
+              sets={p.setsWon[pl.id] ?? 0}
+            />
+          </Seat>
         ))}
-      </section>
 
-      <footer className="md-legend">
-        {players.map((pl) => (
-          <div key={pl.id} className="md-bankrow">
-            <span className="md-name">{pl.name}</span>
-            <div className="md-chips">
-              {(p.bank[pl.id] ?? []).map((card) => (
-                <CardChip key={card.id} card={card} size="sm" />
-              ))}
-              {(p.bank[pl.id] ?? []).length === 0 && <span className="md-muted">empty bank</span>}
+        <div className="md-center-area">
+          {pend ? (
+            <div className="md-pending">
+              <strong>{p.lastEvent}</strong>
+              <span className="md-muted">
+                {pend.stage === 'block'
+                  ? `waiting on ${name(pend.decider)}${pend.jsn > 0 ? ` — ${pend.jsn} × Just Say No` : ''}`
+                  : `${name(pend.targets[0]!)} is paying $${pend.amount}M`}
+              </span>
             </div>
-          </div>
-        ))}
-      </footer>
+          ) : (
+            p.lastEvent && <div className="md-log">{p.lastEvent}</div>
+          )}
+        </div>
+      </section>
     </div>
   )
 }

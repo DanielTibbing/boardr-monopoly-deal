@@ -41,5 +41,3 @@ Pay from the cards **on your table** — never from your hand. There's **no chan
 # Running out of cards
 
 When the draw pile is empty, the discard pile is shuffled to form a new one.
-
-> **This version (core):** House, Hotel, and Double the Rent are not in the deck yet — a follow-up will add them. Everything else plays by the full rules.

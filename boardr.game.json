@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "io.github.danieltibbing.monopolydeal",
   "name": "Monopoly Deal",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "minPlayers": 2,
   "maxPlayers": 5,
   "phoneMode": "required",

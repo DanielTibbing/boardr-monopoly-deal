@@ -6,6 +6,7 @@ import {
   COLORS,
   HOTEL_RENT,
   HOUSE_RENT,
+  RENT,
   rentFor,
   setComplete,
   SET_SIZE,
@@ -164,7 +165,7 @@ export default function Phone({ playerID, view, meta, dispatch }: PhoneUiProps<P
         ))}
       </div>
 
-      {sel && renderCardActions(myHand.find((c) => c.id === sel)!)}
+      {sel && renderCardActions(myHand.find((c) => c.id === sel))}
 
       <div className="mdp-turnbar">
         {over ? (
@@ -189,7 +190,8 @@ export default function Phone({ playerID, view, meta, dispatch }: PhoneUiProps<P
   )
 
   // ---- contextual actions for a selected hand card ----
-  function renderCardActions(card: Card): React.JSX.Element {
+  function renderCardActions(card?: Card): React.JSX.Element {
+    if (!card) return <div />
     if (card.kind === 'money' || (card.kind === 'action' && card.action !== 'justSayNo') || card.kind === 'rent') {
       // bankable + action/rent specifics below; money just banks
     }
@@ -250,7 +252,33 @@ export default function Phone({ playerID, view, meta, dispatch }: PhoneUiProps<P
     if (card.action === 'doubleRent') {
       btns.push(<span key="dn" className="mdp-muted">play alongside a Rent card (offered when you charge rent)</span>)
     }
-    return <div className="mdp-cardactions">{btns}</div>
+    const schedules: React.JSX.Element[] = []
+    if (card.kind === 'property') {
+      schedules.push(<RentSchedule key={card.color!} color={card.color!} />)
+    } else if (card.kind === 'wild') {
+      const colors = card.wildAny
+        ? COLORS.filter((c) => (p.properties[me]?.[c]?.length ?? 0) > 0)
+        : card.colors!
+      const targetColors = colors.length > 0 ? colors : (['darkblue', 'green', 'red'] as Color[])
+      for (const c of targetColors) {
+        schedules.push(<RentSchedule key={c} color={c} />)
+      }
+    } else if (card.kind === 'rent') {
+      const colors = card.rentAny
+        ? COLORS.filter((c) => (p.properties[me]?.[c]?.length ?? 0) > 0)
+        : card.rentColors!
+      const targetColors = colors.length > 0 ? colors : (['darkblue', 'green', 'red'] as Color[])
+      for (const c of targetColors) {
+        schedules.push(<RentSchedule key={c} color={c} />)
+      }
+    }
+
+    return (
+      <div className="mdp-cardactions-wrapper">
+        <div className="mdp-cardactions">{btns}</div>
+        {schedules.length > 0 && <div className="mdp-schedules">{schedules}</div>}
+      </div>
+    )
   }
 
   // ---- multi-step targeting ----
@@ -330,7 +358,8 @@ export default function Phone({ playerID, view, meta, dispatch }: PhoneUiProps<P
       )
     }
     if (f.action === 'rent') {
-      const card = myHand.find((c) => c.id === f.cardId)!
+      const card = myHand.find((c) => c.id === f.cardId)
+      if (!card) return <div />
       const rentAmt = (c: Color): number => {
         const count = p.properties[me]![c]!.length
         let a = rentFor(c, count)
@@ -444,6 +473,25 @@ function MyTable({
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+function RentSchedule({ color }: { color: Color }): React.JSX.Element {
+  const schedule = RENT[color]
+  return (
+    <div className="mdp-rent-schedule" style={{ borderColor: COLOR_HEX[color] }}>
+      <span className="mdp-schedule-title" style={{ color: COLOR_HEX[color] }}>
+        {COLOR_LABEL[color]} Rent:
+      </span>
+      <div className="mdp-schedule-steps">
+        {schedule.map((val, idx) => (
+          <span key={idx} className="mdp-schedule-step">
+            {idx + 1} {idx + 1 === 1 ? 'card' : 'cards'}: <strong>${val}M</strong>
+            {idx < schedule.length - 1 ? ' · ' : ''}
+          </span>
+        ))}
+      </div>
     </div>
   )
 }
