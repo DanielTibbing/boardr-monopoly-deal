@@ -10,11 +10,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@boardr/sdk": "^0.1.0"
+    "@boardr/sdk": "^0.2.0"
   },
   "devDependencies": {
-    "@boardr/cli": "^0.1.0",
-    "@boardr/testkit": "^0.1.0",
+    "@boardr/cli": "^0.2.0",
+    "@boardr/testkit": "^0.2.0",
     "@types/react": "^19.1.0",
     "react": "^19.1.0",
     "typescript": "^5.8.0",

@@ -6,7 +6,7 @@
   "minPlayers": 2,
   "maxPlayers": 5,
   "phoneMode": "required",
-  "sdkVersion": "^0.1.0",
+  "sdkVersion": "^0.2.0",
   "entries": {
     "logic": "dist/logic.js",
     "boardUi": "dist/board.js",
