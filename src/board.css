@@ -81,18 +81,16 @@
 }
 .md-wild-badge-any { background: rgba(255,255,255,0.25); color: #fff; }
 
-/* Prominent wildcard notice — shown below the set header, only when a wild is in that set */
-.md-wild-summary { display: flex; flex-direction: column; gap: 3px; }
+/* Wildcard swatch strip — text-free, just the split gradient colour bar */
+.md-wild-summary { display: flex; flex-direction: column; gap: 3px; margin-top: 1px; }
 .md-wild-pill {
-  display: inline-flex; align-items: center;
-  font-size: 0.72rem; font-weight: 700; padding: 2px 7px;
-  border-radius: 5px; white-space: nowrap;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.55);
-  letter-spacing: 0.01em;
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  width: 100%;
 }
 .md-wild-pill-any {
   background: linear-gradient(90deg,#d94f9a,#e8c33a,#2f8f4e);
-  color: #fff;
 }
 
 /* ── Center area ───────────────────────────────────────────────────────────── */

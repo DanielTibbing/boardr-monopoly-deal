@@ -67,9 +67,11 @@ function WildSummary({ cards, setColor }: { cards: Card[]; setColor: Color }): R
       {wilds.map((card) => {
         if (card.wildAny) {
           return (
-            <span key={card.id} className="md-wild-pill md-wild-pill-any" title="Wild — can be any color">
-              ★ wildcard (any color)
-            </span>
+            <span
+              key={card.id}
+              className="md-wild-pill md-wild-pill-any"
+              title="Wildcard — can be any color"
+            />
           )
         }
         const [c1, c2] = card.colors!
@@ -80,17 +82,15 @@ function WildSummary({ cards, setColor }: { cards: Card[]; setColor: Color }): R
             className="md-wild-pill"
             style={{
               background: `linear-gradient(90deg, ${COLOR_HEX[c1!]} 0%, ${COLOR_HEX[c1!]} 42%, #1c1f24 42%, #1c1f24 58%, ${COLOR_HEX[c2!]} 58%, ${COLOR_HEX[c2!]} 100%)`,
-              color: '#fff',
             }}
-            title={`Wildcard: ${COLOR_LABEL[c1!]} / ${COLOR_LABEL[c2!]}`}
-          >
-            ↔ also {COLOR_LABEL[altColor]}
-          </span>
+            title={`Wildcard: ${COLOR_LABEL[c1!]} / ${COLOR_LABEL[c2!]} — also counts as ${COLOR_LABEL[altColor]}`}
+          />
         )
       })}
     </div>
   )
 }
+
 
 function Tableau({
   bank,
@@ -141,13 +141,8 @@ function Tableau({
                   {buildings[c].hotel && <HotelIcon size={13} />}
                 </span>
               </div>
-              {/* Wildcard notice — only shows if a wild is in this set */}
+              {/* Wildcard swatch — only shows if a wild is in this set */}
               <WildSummary cards={properties[c]} setColor={c} />
-              <div className="md-set-cards">
-                {properties[c].map((card) => (
-                  <SetCard key={card.id} card={card} setColor={c} />
-                ))}
-              </div>
             </div>
           )
         })}
