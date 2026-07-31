@@ -81,17 +81,7 @@
 }
 .md-wild-badge-any { background: rgba(255,255,255,0.25); color: #fff; }
 
-/* Wildcard swatch strip — text-free, just the split gradient colour bar */
-.md-wild-summary { display: flex; flex-direction: column; gap: 3px; margin-top: 1px; }
-.md-wild-pill {
-  display: block;
-  height: 6px;
-  border-radius: 3px;
-  width: 100%;
-}
-.md-wild-pill-any {
-  background: linear-gradient(90deg,#d94f9a,#e8c33a,#2f8f4e);
-}
+
 
 /* ── Center area ───────────────────────────────────────────────────────────── */
 .md-center-area {
