@@ -66,25 +66,34 @@
 .md-set-count { font-size: 0.78rem; color: #c8cebe; }
 .md-set-cards { display: flex; gap: 3px; flex-wrap: wrap; }
 
-/* Individual cards inside a set */
+/* Individual card chips inside a set (small row, secondary info) */
 .md-setcard {
   display: inline-flex; align-items: center; justify-content: center; flex-direction: column;
   gap: 2px; border-radius: 5px; font-weight: 700; font-size: 0.62rem;
   min-width: 1.6rem; height: 1.9rem; padding: 0 3px; position: relative;
   text-shadow: 0 1px 2px rgba(0,0,0,0.4);
 }
-.md-setcard-wild {
-  min-width: 3rem;
-  flex-direction: row; gap: 3px;
-}
+.md-setcard-wild { min-width: 3rem; flex-direction: row; gap: 3px; }
 .md-wild-initials { font-size: 0.58rem; font-weight: 900; flex-shrink: 0; }
-
-/* "also Green" / "any" badge on wildcards */
 .md-wild-badge {
   font-size: 0.52rem; font-weight: 700; padding: 1px 4px; border-radius: 3px;
   white-space: nowrap; line-height: 1.4; text-shadow: none;
 }
 .md-wild-badge-any { background: rgba(255,255,255,0.25); color: #fff; }
+
+/* Prominent wildcard notice — shown below the set header, only when a wild is in that set */
+.md-wild-summary { display: flex; flex-direction: column; gap: 3px; }
+.md-wild-pill {
+  display: inline-flex; align-items: center;
+  font-size: 0.72rem; font-weight: 700; padding: 2px 7px;
+  border-radius: 5px; white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.55);
+  letter-spacing: 0.01em;
+}
+.md-wild-pill-any {
+  background: linear-gradient(90deg,#d94f9a,#e8c33a,#2f8f4e);
+  color: #fff;
+}
 
 /* ── Center area ───────────────────────────────────────────────────────────── */
 .md-center-area {

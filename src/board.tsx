@@ -45,12 +45,49 @@ function SetCard({ card, setColor }: { card: Card; setColor: Color }): React.JSX
         background: `linear-gradient(135deg, ${COLOR_HEX[c1!]} 0%, ${COLOR_HEX[c1!]} 45%, #1c1f24 45%, #1c1f24 55%, ${COLOR_HEX[c2!]} 55%, ${COLOR_HEX[c2!]} 100%)`,
         color: '#fff',
       }}
-      title={`Wildcard: ${COLOR_LABEL[c1!]} / ${COLOR_LABEL[c2!]} — currently placed as ${COLOR_LABEL[setColor]}`}
+      title={`Wildcard: ${COLOR_LABEL[c1!]} / ${COLOR_LABEL[c2!]} — placed as ${COLOR_LABEL[setColor]}`}
     >
       <span className="md-wild-initials">{COLOR_LABEL[c1!][0]}/{COLOR_LABEL[c2!][0]}</span>
       <span className="md-wild-badge" style={{ background: COLOR_HEX[altColor], color: inkOn(altColor) }}>
         also {COLOR_LABEL[altColor]}
       </span>
+    </div>
+  )
+}
+
+/**
+ * Prominent wildcard summary shown directly under the set header.
+ * Only renders when the set contains at least one wildcard — otherwise returns null.
+ */
+function WildSummary({ cards, setColor }: { cards: Card[]; setColor: Color }): React.JSX.Element | null {
+  const wilds = cards.filter((c) => c.kind === 'wild')
+  if (wilds.length === 0) return null
+  return (
+    <div className="md-wild-summary">
+      {wilds.map((card) => {
+        if (card.wildAny) {
+          return (
+            <span key={card.id} className="md-wild-pill md-wild-pill-any" title="Wild — can be any color">
+              ★ wildcard (any color)
+            </span>
+          )
+        }
+        const [c1, c2] = card.colors!
+        const altColor = c1 === setColor ? c2! : c1!
+        return (
+          <span
+            key={card.id}
+            className="md-wild-pill"
+            style={{
+              background: `linear-gradient(90deg, ${COLOR_HEX[c1!]} 0%, ${COLOR_HEX[c1!]} 42%, #1c1f24 42%, #1c1f24 58%, ${COLOR_HEX[c2!]} 58%, ${COLOR_HEX[c2!]} 100%)`,
+              color: '#fff',
+            }}
+            title={`Wildcard: ${COLOR_LABEL[c1!]} / ${COLOR_LABEL[c2!]}`}
+          >
+            ↔ also {COLOR_LABEL[altColor]}
+          </span>
+        )
+      })}
     </div>
   )
 }
@@ -104,6 +141,8 @@ function Tableau({
                   {buildings[c].hotel && <HotelIcon size={13} />}
                 </span>
               </div>
+              {/* Wildcard notice — only shows if a wild is in this set */}
+              <WildSummary cards={properties[c]} setColor={c} />
               <div className="md-set-cards">
                 {properties[c].map((card) => (
                   <SetCard key={card.id} card={card} setColor={c} />
