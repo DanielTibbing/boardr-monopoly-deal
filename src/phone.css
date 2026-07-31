@@ -1,78 +1,168 @@
-.mdp-screen { display: flex; flex-direction: column; gap: 0.9rem; padding: 0.5rem 0.25rem;
-  font-family: system-ui, -apple-system, sans-serif; }
+/* ── Fonts ─────────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Russo+One&display=swap');
+
+/* ── Base ──────────────────────────────────────────────────────────────────── */
+.mdp-screen {
+  display: flex; flex-direction: column; gap: 1rem; padding: 0.6rem 0.4rem;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
 .mdp-center { align-items: center; justify-content: center; min-height: 40vh; text-align: center; }
 .mdp-center-text { text-align: center; }
-.mdp-muted { color: #9a9fa8; margin: 0; }
-.mdp-statusline { display: flex; justify-content: space-between; color: #9a9fa8; font-variant-numeric: tabular-nums; }
-.mdp-banner { padding: 0.6rem 0.9rem; border-radius: 10px; background: rgba(242,177,61,0.12);
-  border: 1px solid rgba(242,177,61,0.5); color: #f4c86e; font-weight: 700; text-align: center; }
-.mdp-hand { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
-.mdp-actions, .mdp-cardactions { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
-.mdp-cardactions { border-top: 1px solid #2a2e36; padding-top: 0.6rem; }
-.mdp-btn { min-height: 46px; border-radius: 11px; border: 1px solid #2a2e36; background: #1d2026;
-  color: #e8e8e8; font-size: 0.98rem; font-weight: 700; padding: 0 0.9rem; touch-action: manipulation;
-  transition: transform 0.1s ease, filter 0.1s ease, background-color 0.1s ease; }
-.mdp-btn:active { transform: scale(0.96); filter: brightness(0.9); }
-.mdp-btn:disabled { opacity: 0.4; }
-.mdp-btn:disabled:active { transform: none; filter: none; }
-.mdp-primary { background: #f2b13d; border-color: #f2b13d; color: #231602; }
-.mdp-jsn { background: #b3403a; border-color: #b3403a; color: #fff; }
-.mdp-cancel { background: transparent; color: #9a9fa8; }
-.mdp-turnbar { display: flex; justify-content: center; }
-.mdp-err { color: #e5484d; text-align: center; margin: 0; }
-.mdp-discard { min-height: 40px; border-radius: 9px; border: 1px dashed #4a3a3a; background: #241a1a;
-  color: #d8a0a0; font-size: 0.8rem; padding: 0 0.5rem; }
-.mdp-mytable { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; min-height: 1.8rem;
-  padding: 0.4rem; border: 1px solid #262a31; border-radius: 10px; }
-.mdp-myset { display: flex; align-items: center; gap: 0.3rem; }
-.mdp-setchip { font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.45rem; border-radius: 6px; }
-.mdp-wildmove { font-size: 0.65rem; padding: 0.1rem 0.35rem; border-radius: 6px; border: 1px solid #3a3f48;
-  background: #22262e; color: #cbd0da; }
 
-/* card chips (shared class names with cardUi) */
-.md-cardbtn { background: none; border: none; padding: 0; }
-.md-card { display: inline-flex; align-items: center; justify-content: center; position: relative;
+/* contrast fix: was #9a9fa8 (~3.1:1) → #b5bcc8 (~4.6:1) on dark bg */
+.mdp-muted { color: #b5bcc8; margin: 0; }
+
+.mdp-statusline {
+  display: flex; justify-content: space-between;
+  color: #b5bcc8; font-variant-numeric: tabular-nums; font-size: 0.82rem;
+}
+
+/* Banner: Russo One for display personality + uppercase for hierarchy separation from buttons */
+.mdp-banner {
+  padding: 0.65rem 0.9rem; border-radius: 10px;
+  background: rgba(242,177,61,0.12); border: 1px solid rgba(242,177,61,0.5);
+  color: #f4c86e; font-weight: 700; text-align: center;
+  font-family: 'Russo One', 'Inter', sans-serif;
+  letter-spacing: 0.03em; font-size: 0.95rem;
+}
+
+.mdp-hand { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.mdp-actions, .mdp-cardactions { display: flex; flex-wrap: wrap; gap: 0.55rem; justify-content: center; }
+.mdp-cardactions { border-top: 1px solid #2a2e36; padding-top: 0.7rem; }
+
+/* ── Buttons ───────────────────────────────────────────────────────────────── */
+.mdp-btn {
+  min-height: 48px; /* up from 46px, closer to 44px+ comfortable tap */
+  border-radius: 11px; border: 1px solid #2a2e36; background: #1d2026;
+  color: #e8e8e8; font-size: 0.98rem; font-weight: 600;
+  font-family: 'Inter', system-ui, sans-serif;
+  padding: 0 1rem; touch-action: manipulation; cursor: pointer;
+  transition: transform 0.12s ease, filter 0.12s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+.mdp-btn:hover { background: #272b33; border-color: #3a3f4a; }
+.mdp-btn:active { transform: scale(0.95); filter: brightness(0.88); }
+.mdp-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.mdp-btn:disabled:active { transform: none; filter: none; }
+
+/* Focus rings — keyboard + accessibility (show only on keyboard nav, not mouse click) */
+.mdp-btn:focus-visible {
+  outline: 2px solid #f2b13d; outline-offset: 2px;
+}
+
+.mdp-primary {
+  background: #f2b13d; border-color: #f2b13d; color: #231602;
+  font-weight: 700;
+}
+.mdp-primary:hover { background: #f5bc55; border-color: #f5bc55; }
+
+.mdp-jsn { background: #b3403a; border-color: #b3403a; color: #fff; }
+.mdp-jsn:hover { background: #c44840; border-color: #c44840; }
+
+/* Cancel: was transparent with no visible boundary — now has a faint border so it reads as a button */
+.mdp-cancel {
+  background: transparent; color: #b5bcc8;
+  border-color: rgba(255,255,255,0.1);
+}
+.mdp-cancel:hover { background: rgba(255,255,255,0.05); color: #e8e8e8; border-color: rgba(255,255,255,0.2); }
+
+.mdp-turnbar { display: flex; justify-content: center; }
+
+/* Error: add a visual marker, not just red text */
+.mdp-err {
+  color: #f87171; text-align: center; margin: 0;
+  font-size: 0.88rem; font-weight: 500;
+}
+.mdp-err::before { content: '⚠ '; }
+
+/* Discard row */
+.mdp-discard {
+  min-height: 44px; border-radius: 9px; border: 1px dashed #4a3a3a;
+  background: #241a1a; color: #d8a0a0; font-size: 0.8rem; padding: 0 0.6rem;
+  cursor: pointer; transition: background 0.15s ease;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.mdp-discard:hover { background: #2e1f1f; }
+.mdp-discard:focus-visible { outline: 2px solid #f87171; outline-offset: 2px; }
+
+/* ── My Table ──────────────────────────────────────────────────────────────── */
+.mdp-mytable {
+  display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; min-height: 2rem;
+  padding: 0.5rem; border: 1px solid #262a31; border-radius: 10px;
+}
+.mdp-myset { display: flex; align-items: center; gap: 0.35rem; }
+.mdp-setchip { font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.45rem; border-radius: 6px; }
+
+.mdp-wildmove {
+  font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.45rem; border-radius: 6px;
+  border: 1px solid #3a3f48; background: #22262e; color: #cbd0da;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  min-height: 28px; /* practical minimum for a secondary in-table control */
+}
+.mdp-wildmove:hover { background: #2c3040; border-color: #4a5060; }
+.mdp-wildmove:focus-visible { outline: 2px solid #f2b13d; outline-offset: 2px; }
+.mdp-wildmove-active { background: rgba(242,177,61,0.13); border-color: #f2b13d; color: #f2b13d; }
+
+/* Wild card destination picker */
+.mdp-wild-picker {
+  border: 1px solid rgba(242,177,61,0.4); border-radius: 12px;
+  background: rgba(242,177,61,0.06); padding: 0.65rem;
+  display: flex; flex-direction: column; gap: 0.55rem;
+}
+.mdp-wild-picker-header {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 0.9rem; color: #e8e8e8;
+}
+.mdp-wild-picker-header strong { color: #f4c86e; }
+.mdp-wild-picker-close {
+  background: none; border: none; color: #b5bcc8; font-size: 1.1rem;
+  padding: 0.15rem 0.35rem; border-radius: 6px; cursor: pointer; line-height: 1;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.mdp-wild-picker-close:hover { background: rgba(255,255,255,0.08); color: #e8e8e8; }
+.mdp-wild-picker-close:focus-visible { outline: 2px solid #f2b13d; outline-offset: 2px; }
+.mdp-wild-picker-opts { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.mdp-wild-dest { min-height: 44px; }
+
+/* Target action description (shown to the targeted player in the block screen) */
+.mdp-target-desc {
+  display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.65rem 0.85rem;
+  border-radius: 10px; background: rgba(229,72,77,0.12); border: 1px solid rgba(229,72,77,0.4);
+  color: #f9a8a8; font-size: 0.9rem; font-weight: 600;
+}
+.mdp-target-desc-icon { font-size: 1.1rem; line-height: 1.3; flex-shrink: 0; }
+
+/* ── Card chips (shared class names with cardUi) ───────────────────────────── */
+.md-cardbtn { background: none; border: none; padding: 0; cursor: pointer; }
+.md-card {
+  display: inline-flex; align-items: center; justify-content: center; position: relative;
   border-radius: 7px; font-weight: 700; text-align: center; padding: 0 5px;
-  transition: transform 0.1s ease, outline 0.15s ease; }
-.md-card.md-tap:active { transform: scale(0.94); }
+  transition: transform 0.12s ease, outline 0.12s ease;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.md-card.md-tap { cursor: pointer; }
+.md-card.md-tap:hover { filter: brightness(1.08); }
+.md-card.md-tap:active { transform: scale(0.93); }
 .md-card-sm { min-width: 3.2rem; height: 2.5rem; font-size: 0.7rem; }
 .md-card-md { min-width: 4.4rem; height: 3.4rem; font-size: 0.85rem; }
 .md-sel { outline: 3px solid #f2b13d; outline-offset: 1px; }
-.md-tap { cursor: pointer; }
-.md-corner { position: absolute; right: 2px; bottom: 1px; font-size: 0.55rem; opacity: 0.85; }
+/* corner value badge: was 0.55rem (8.8px) — bumped to 0.65rem (~10.4px) */
+.md-corner { position: absolute; right: 2px; bottom: 1px; font-size: 0.65rem; opacity: 0.85; }
 
+/* ── Card action wrappers ──────────────────────────────────────────────────── */
 .mdp-cardactions-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  width: 100%;
+  display: flex; flex-direction: column; gap: 0.65rem; width: 100%;
 }
 .mdp-schedules {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  width: 100%;
+  display: flex; flex-direction: column; gap: 0.45rem; width: 100%;
 }
 .mdp-rent-schedule {
-  padding: 0.4rem 0.6rem;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 0.8rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  width: 100%;
-  box-sizing: border-box;
+  padding: 0.45rem 0.65rem; border-radius: 8px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.8rem; display: flex; flex-direction: column; gap: 0.2rem;
+  width: 100%; box-sizing: border-box;
+  font-family: 'Inter', system-ui, sans-serif;
 }
-.mdp-schedule-title {
-  font-weight: 700;
-  font-size: 0.82rem;
-}
-.mdp-schedule-steps {
-  color: #a1a1aa;
-}
-.mdp-schedule-step strong {
-  color: #f4f4f5;
-}
-
+.mdp-schedule-title { font-weight: 700; font-size: 0.82rem; }
+.mdp-schedule-steps { color: #b5bcc8; }
+.mdp-schedule-step strong { color: #f4f4f5; }

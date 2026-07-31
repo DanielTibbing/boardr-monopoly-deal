@@ -7,6 +7,54 @@ import './board.css'
 
 type BoardView = { public: MDPublic }
 
+/** A single card in a set on the board — regular or wildcard */
+function SetCard({ card, setColor }: { card: Card; setColor: Color }): React.JSX.Element {
+  if (card.kind !== 'wild') {
+    // Plain property card
+    return (
+      <div
+        className="md-setcard"
+        style={{ background: COLOR_HEX[setColor], color: inkOn(setColor) }}
+        title={COLOR_LABEL[setColor]}
+      >
+        <span>{COLOR_LABEL[setColor][0]}</span>
+      </div>
+    )
+  }
+
+  if (card.wildAny) {
+    return (
+      <div
+        className="md-setcard md-setcard-wild"
+        style={{ background: 'linear-gradient(135deg,#d94f9a,#e8c33a,#2f8f4e)', color: '#fff' }}
+        title="Wild (any color)"
+      >
+        <span>★</span>
+        <span className="md-wild-badge md-wild-badge-any">any</span>
+      </div>
+    )
+  }
+
+  // Dual-color wildcard: show both colors, badge the "other" color
+  const [c1, c2] = card.colors!
+  const altColor = c1 === setColor ? c2! : c1!
+  return (
+    <div
+      className="md-setcard md-setcard-wild"
+      style={{
+        background: `linear-gradient(135deg, ${COLOR_HEX[c1!]} 0%, ${COLOR_HEX[c1!]} 45%, #1c1f24 45%, #1c1f24 55%, ${COLOR_HEX[c2!]} 55%, ${COLOR_HEX[c2!]} 100%)`,
+        color: '#fff',
+      }}
+      title={`Wildcard: ${COLOR_LABEL[c1!]} / ${COLOR_LABEL[c2!]} — currently placed as ${COLOR_LABEL[setColor]}`}
+    >
+      <span className="md-wild-initials">{COLOR_LABEL[c1!][0]}/{COLOR_LABEL[c2!][0]}</span>
+      <span className="md-wild-badge" style={{ background: COLOR_HEX[altColor], color: inkOn(altColor) }}>
+        also {COLOR_LABEL[altColor]}
+      </span>
+    </div>
+  )
+}
+
 function Tableau({
   bank,
   properties,
@@ -46,14 +94,21 @@ function Tableau({
               className={`md-set ${full ? 'md-full' : ''}`}
               style={{ borderColor: COLOR_HEX[c] }}
             >
-              <span className="md-set-chip" style={{ background: COLOR_HEX[c], color: inkOn(c) }}>
-                {COLOR_LABEL[c]}
-              </span>
-              <span className="md-set-count">
-                {have}/{SET_SIZE[c]} · ${rentVal}M
-                {buildings[c].house && <HouseIcon size={13} />}
-                {buildings[c].hotel && <HotelIcon size={13} />}
-              </span>
+              <div className="md-set-header">
+                <span className="md-set-chip" style={{ background: COLOR_HEX[c], color: inkOn(c) }}>
+                  {COLOR_LABEL[c]}
+                </span>
+                <span className="md-set-count">
+                  {have}/{SET_SIZE[c]} · ${rentVal}M
+                  {buildings[c].house && <HouseIcon size={13} />}
+                  {buildings[c].hotel && <HotelIcon size={13} />}
+                </span>
+              </div>
+              <div className="md-set-cards">
+                {properties[c].map((card) => (
+                  <SetCard key={card.id} card={card} setColor={c} />
+                ))}
+              </div>
             </div>
           )
         })}

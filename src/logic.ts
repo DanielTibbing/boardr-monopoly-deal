@@ -322,9 +322,13 @@ function finishTarget(state: MDState, ctx: WithPlayers): void {
   syncCounts(state, ctx)
 }
 
-function label(action: ActionType | 'rent', by: string, extra = ''): string {
-  const name = action === 'rent' ? 'Rent' : ACTION_LABEL[action]
-  return `${by} played ${name}${extra}`
+function playerName(ctx: WithPlayers, id: string): string {
+  return ctx.players.find((p) => p.id === id)?.name ?? id
+}
+
+function label(action: ActionType | 'rent', byName: string, extra = ''): string {
+  const actionName = action === 'rent' ? 'Rent' : ACTION_LABEL[action]
+  return `${byName} played ${actionName}${extra}`
 }
 
 // --- guards -----------------------------------------------------------------
@@ -405,7 +409,7 @@ export default defineGame<MDState>({
         takeFromHand(state, ctx.playerID, card.id)
         state.public.bank[ctx.playerID]!.push(card)
         state.public.playsMade++
-        state.public.lastEvent = `${ctx.playerID} banked ${card.name}`
+        state.public.lastEvent = `${playerName(ctx, ctx.playerID)} banked ${card.name}`
         syncCounts(state, ctx)
       },
     },
@@ -425,7 +429,7 @@ export default defineGame<MDState>({
         takeFromHand(state, ctx.playerID, card.id)
         state.public.properties[ctx.playerID]![color]!.push(card)
         state.public.playsMade++
-        state.public.lastEvent = `${ctx.playerID} played ${COLOR_LABEL[color]} property`
+        state.public.lastEvent = `${playerName(ctx, ctx.playerID)} played ${COLOR_LABEL[color]} property`
         refreshSets(state, ctx)
         syncCounts(state, ctx)
       },
@@ -465,7 +469,7 @@ export default defineGame<MDState>({
         state.internal!.discard.push(card)
         draw(state, ctx.playerID, 2, ctx.random)
         state.public.playsMade++
-        state.public.lastEvent = `${ctx.playerID} played Pass Go`
+        state.public.lastEvent = `${playerName(ctx, ctx.playerID)} played Pass Go`
         syncCounts(state, ctx)
       },
     },
@@ -490,7 +494,7 @@ export default defineGame<MDState>({
         takeFromHand(state, ctx.playerID, card.id)
         state.public.buildings[ctx.playerID]![color]!.house = card
         state.public.playsMade++
-        state.public.lastEvent = `${ctx.playerID} built a house on ${COLOR_LABEL[color]}`
+        state.public.lastEvent = `${playerName(ctx, ctx.playerID)} built a house on ${COLOR_LABEL[color]}`
         syncCounts(state, ctx)
       },
     },
@@ -517,7 +521,7 @@ export default defineGame<MDState>({
         takeFromHand(state, ctx.playerID, card.id)
         b.hotel = card
         state.public.playsMade++
-        state.public.lastEvent = `${ctx.playerID} built a hotel on ${COLOR_LABEL[color]}`
+        state.public.lastEvent = `${playerName(ctx, ctx.playerID)} built a hotel on ${COLOR_LABEL[color]}`
         syncCounts(state, ctx)
       },
     },
@@ -541,7 +545,7 @@ export default defineGame<MDState>({
         state.internal!.discard.push(card)
         state.public.playsMade++
         openWindow(state, ctx.playerID, 'debtCollector', [target], DEBT_COLLECTOR, { type: 'charge' }, '')
-        state.public.lastEvent = label('debtCollector', ctx.playerID, ` on ${target} ($${DEBT_COLLECTOR}M)`)
+        state.public.lastEvent = label('debtCollector', playerName(ctx, ctx.playerID), ` on ${playerName(ctx, target)} ($${DEBT_COLLECTOR}M)`)
         syncCounts(state, ctx)
       },
     },
@@ -562,7 +566,7 @@ export default defineGame<MDState>({
         state.public.playsMade++
         const targets = ids(ctx).filter((p) => p !== ctx.playerID)
         openWindow(state, ctx.playerID, 'birthday', targets, BIRTHDAY, { type: 'charge' }, '')
-        state.public.lastEvent = label('birthday', ctx.playerID, ` — everyone owes $${BIRTHDAY}M`)
+        state.public.lastEvent = label('birthday', playerName(ctx, ctx.playerID), ` — everyone owes $${BIRTHDAY}M`)
         syncCounts(state, ctx)
       },
     },
@@ -616,7 +620,7 @@ export default defineGame<MDState>({
         }
         state.public.playsMade += playsNeeded
         openWindow(state, ctx.playerID, 'rent', targets, amount, { type: 'charge' }, '')
-        state.public.lastEvent = `${ctx.playerID} charged ${COLOR_LABEL[color]} rent ($${amount}M${dbl ? ', doubled' : ''})`
+        state.public.lastEvent = `${playerName(ctx, ctx.playerID)} charged ${COLOR_LABEL[color]} rent ($${amount}M${dbl ? ', doubled' : ''})`
         syncCounts(state, ctx)
       },
     },
@@ -646,8 +650,9 @@ export default defineGame<MDState>({
         takeFromHand(state, ctx.playerID, card.id)
         state.internal!.discard.push(card)
         state.public.playsMade++
+        const slyCard = found.card
         openWindow(state, ctx.playerID, 'slyDeal', [target], 0, { type: 'sly', color, cardId: targetCardId }, '')
-        state.public.lastEvent = label('slyDeal', ctx.playerID, ` on ${target}`)
+        state.public.lastEvent = label('slyDeal', playerName(ctx, ctx.playerID), ` — trying to steal ${slyCard.name} (${COLOR_LABEL[color]}) from ${playerName(ctx, target)}`)
         syncCounts(state, ctx)
       },
     },
@@ -679,7 +684,9 @@ export default defineGame<MDState>({
         if (setComplete(giveColor, state.public.properties[ctx.playerID]?.[giveColor]?.length ?? 0)) {
           return ctx.invalid('you cannot give from a completed set')
         }
-        if (!findProp(state, target, targetCardId) || !findProp(state, ctx.playerID, giveCardId)) {
+        const theirProp = findProp(state, target, targetCardId)
+        const myProp = findProp(state, ctx.playerID, giveCardId)
+        if (!theirProp || !myProp) {
           return ctx.invalid('one of those cards is not on the table')
         }
         takeFromHand(state, ctx.playerID, card.id)
@@ -694,7 +701,7 @@ export default defineGame<MDState>({
           { type: 'forced', color, cardId: targetCardId, giveColor, giveCardId },
           '',
         )
-        state.public.lastEvent = label('forcedDeal', ctx.playerID, ` with ${target}`)
+        state.public.lastEvent = label('forcedDeal', playerName(ctx, ctx.playerID), ` — swapping their ${theirProp.card.name} (${COLOR_LABEL[color]}) with ${playerName(ctx, target)}`)
         syncCounts(state, ctx)
       },
     },
@@ -722,7 +729,7 @@ export default defineGame<MDState>({
         state.internal!.discard.push(card)
         state.public.playsMade++
         openWindow(state, ctx.playerID, 'dealBreaker', [target], 0, { type: 'deal', color }, '')
-        state.public.lastEvent = label('dealBreaker', ctx.playerID, ` — ${COLOR_LABEL[color]} set from ${target}`)
+        state.public.lastEvent = label('dealBreaker', playerName(ctx, ctx.playerID), ` — trying to steal ${playerName(ctx, target)}'s ${COLOR_LABEL[color]} set`)
         syncCounts(state, ctx)
       },
     },
@@ -740,7 +747,7 @@ export default defineGame<MDState>({
         pend.jsn++
         // the decision bounces to the other party in this target's chain
         pend.decider = pend.decider === pend.by ? pend.targets[0]! : pend.by
-        state.public.lastEvent = `${ctx.playerID} said Just Say No!`
+        state.public.lastEvent = `${playerName(ctx, ctx.playerID)} said Just Say No!`
         syncCounts(state, ctx)
       },
     },
@@ -797,7 +804,7 @@ export default defineGame<MDState>({
           }
         }
         for (const color of brokenColors) demolishIfBroken(state, payer, color)
-        state.public.lastEvent = `${payer} paid ${pend.by} $${total}M`
+        state.public.lastEvent = `${playerName(ctx, payer)} paid ${playerName(ctx, pend.by)} $${total}M`
         finishTarget(state, ctx)
         syncCounts(state, ctx)
       },
@@ -835,7 +842,7 @@ export default defineGame<MDState>({
         }
         const next = nextPlayer(ctx, ctx.playerID)
         beginTurn(state, next, ctx.random)
-        state.public.lastEvent = `${next}'s turn`
+        state.public.lastEvent = `${playerName(ctx, next)}'s turn`
         syncCounts(state, ctx)
         ctx.events.endTurn({ next })
       },

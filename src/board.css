@@ -1,3 +1,7 @@
+/* ── Fonts ─────────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Russo+One&display=swap');
+
+/* ── Table surface ─────────────────────────────────────────────────────────── */
 .md-table {
   min-height: calc(100vh - 2rem);
   padding: 1.5rem 2rem;
@@ -6,18 +10,28 @@
   gap: 1.5rem;
   background: radial-gradient(120% 90% at 50% 8%, #1c2b22, #0e130f 75%);
   color: #ecefe8;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   box-sizing: border-box;
 }
 .md-center { align-items: center; justify-content: center; text-align: center; }
-.md-muted { color: #97a08f; }
-.md-topline { display: flex; justify-content: space-between; color: #97a08f; }
-.md-turn { color: #f2b13d; font-weight: 700; }
+
+/* contrast fix: #97a08f on #0e130f ≈ 3.4:1 → #b0bba8 ≈ 4.7:1 */
+.md-muted { color: #b0bba8; }
+
+.md-topline {
+  display: flex; justify-content: space-between;
+  color: #b0bba8; font-size: 0.88rem;
+}
+.md-turn { color: #f2b13d; font-weight: 700; font-family: 'Russo One', 'Inter', sans-serif; letter-spacing: 0.02em; }
+
+/* ── Pending / log overlay ─────────────────────────────────────────────────── */
 .md-pending, .md-log {
   padding: 0.7rem 1rem; border-radius: 12px; background: rgba(242,177,61,0.1);
   border: 1px solid rgba(242,177,61,0.4); display: flex; flex-direction: column; gap: 0.2rem;
 }
 .md-log { background: rgba(255,255,255,0.04); border-color: #2b3427; color: #c8cebe; }
+
+/* ── Layout: seats ─────────────────────────────────────────────────────────── */
 .md-seats {
   position: relative;
   flex: 1;
@@ -31,17 +45,48 @@
   padding: 0.8rem 1rem;
   min-width: 19rem;
   max-width: 22rem;
+  width: 100%; /* prevent bleed on narrow projectors */
   box-sizing: border-box;
 }
 .md-active { border-color: #f2b13d; box-shadow: 0 0 20px rgba(242,177,61,0.18); }
-.md-seat-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.4rem; }
-.md-name { font-weight: 700; }
-.md-sets { color: #f4c86e; font-size: 0.85rem; }
+
+.md-seat-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.45rem; }
+.md-name { font-weight: 700; font-family: 'Russo One', 'Inter', sans-serif; font-size: 0.95rem; }
+.md-sets { color: #f4c86e; font-size: 0.83rem; }
+
+/* ── Property sets ─────────────────────────────────────────────────────────── */
 .md-sets-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.md-set { display: flex; align-items: center; gap: 0.3rem; border: 1px solid; border-radius: 8px; padding: 0.15rem 0.35rem; }
+.md-set {
+  display: flex; flex-direction: column; gap: 0.3rem;
+  border: 1px solid; border-radius: 8px; padding: 0.25rem 0.4rem;
+}
 .md-set.md-full { box-shadow: 0 0 0 2px rgba(74,222,128,0.5) inset; }
+.md-set-header { display: flex; align-items: center; gap: 0.3rem; }
 .md-set-chip { font-size: 0.7rem; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 5px; }
-.md-set-count { font-size: 0.8rem; color: #c8cebe; }
+.md-set-count { font-size: 0.78rem; color: #c8cebe; }
+.md-set-cards { display: flex; gap: 3px; flex-wrap: wrap; }
+
+/* Individual cards inside a set */
+.md-setcard {
+  display: inline-flex; align-items: center; justify-content: center; flex-direction: column;
+  gap: 2px; border-radius: 5px; font-weight: 700; font-size: 0.62rem;
+  min-width: 1.6rem; height: 1.9rem; padding: 0 3px; position: relative;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+.md-setcard-wild {
+  min-width: 3rem;
+  flex-direction: row; gap: 3px;
+}
+.md-wild-initials { font-size: 0.58rem; font-weight: 900; flex-shrink: 0; }
+
+/* "also Green" / "any" badge on wildcards */
+.md-wild-badge {
+  font-size: 0.52rem; font-weight: 700; padding: 1px 4px; border-radius: 3px;
+  white-space: nowrap; line-height: 1.4; text-shadow: none;
+}
+.md-wild-badge-any { background: rgba(255,255,255,0.25); color: #fff; }
+
+/* ── Center area ───────────────────────────────────────────────────────────── */
 .md-center-area {
   position: absolute;
   top: 50%;
@@ -54,6 +99,8 @@
   max-width: 22rem;
   z-index: 2;
 }
+
+/* ── Bank row ──────────────────────────────────────────────────────────────── */
 .md-bank-row {
   display: flex;
   flex-direction: column;
@@ -64,15 +111,21 @@
 }
 .md-bank-label {
   font-size: 0.75rem;
-  color: #97a08f;
-  font-weight: 700;
+  color: #b0bba8;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .md-chips { display: flex; gap: 4px; flex-wrap: wrap; }
 
-/* cards */
-.md-card { display: inline-flex; align-items: center; justify-content: center; position: relative;
-  border-radius: 6px; font-weight: 700; text-align: center; padding: 0 4px; }
+/* ── Card chips (also referenced by phone) ─────────────────────────────────── */
+.md-card {
+  display: inline-flex; align-items: center; justify-content: center; position: relative;
+  border-radius: 6px; font-weight: 700; text-align: center; padding: 0 4px;
+  font-family: 'Inter', system-ui, sans-serif;
+}
 .md-card-sm { min-width: 2.4rem; height: 1.9rem; font-size: 0.62rem; }
 .md-card-md { min-width: 3.4rem; height: 2.6rem; font-size: 0.75rem; }
 .md-money { font-variant-numeric: tabular-nums; }
-.md-corner { position: absolute; right: 2px; bottom: 1px; font-size: 0.55rem; opacity: 0.85; }
+/* bumped from 0.55rem (8.8px) to 0.65rem (~10.4px) for legibility */
+.md-corner { position: absolute; right: 2px; bottom: 1px; font-size: 0.65rem; opacity: 0.85; }

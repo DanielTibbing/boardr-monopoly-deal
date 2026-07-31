@@ -70,9 +70,37 @@ export default function Phone({ playerID, view, meta, dispatch }: PhoneUiProps<P
 
   // ---- response: block (Just Say No or accept) ----
   if (iDecide) {
+    // Build a human-readable description of what's being targeted at ME
+    const pendingDescription = (): string | null => {
+      if (!pend) return null
+      const kind = pend.kind
+      if (kind.type === 'sly') {
+        // Find the card name from the public properties
+        const card = COLORS.flatMap((c) => p.properties[me]![c]!).find((c) => c.id === kind.cardId)
+        const cardName = card ? `${card.name} (${COLOR_LABEL[kind.color]})` : `a ${COLOR_LABEL[kind.color]} card`
+        return `They want to steal your ${cardName}`
+      }
+      if (kind.type === 'forced') {
+        // What they're taking from me
+        const card = COLORS.flatMap((c) => p.properties[me]![c]!).find((c) => c.id === kind.cardId)
+        const cardName = card ? `${card.name} (${COLOR_LABEL[kind.color]})` : `a ${COLOR_LABEL[kind.color]} card`
+        return `They want to take your ${cardName} in exchange for one of their cards`
+      }
+      if (kind.type === 'deal') {
+        return `They want to steal your entire ${COLOR_LABEL[kind.color]} set`
+      }
+      return null
+    }
+    const desc = pendingDescription()
     return (
       <div className="mdp-screen">
         <Banner text={p.lastEvent ?? 'Respond'} />
+        {desc && (
+          <div className="mdp-target-desc">
+            <span className="mdp-target-desc-icon">⚠️</span>
+            <span>{desc}</span>
+          </div>
+        )}
         <p className="mdp-muted mdp-center-text">
           {pend!.by === me
             ? 'Your action was blocked — counter it?'
@@ -205,10 +233,20 @@ export default function Phone({ playerID, view, meta, dispatch }: PhoneUiProps<P
       )
     }
     if (card.kind === 'property' || card.kind === 'wild') {
-      const colors = card.kind === 'property' ? [card.color!] : card.wildAny ? COLORS : card.colors!
+      let colors: Color[]
+      if (card.kind === 'property') {
+        colors = [card.color!]
+      } else if (card.wildAny) {
+        // For wildAny: only show colors the player already has on the table,
+        // plus allow placing as the first card of any color (if they have no properties yet)
+        const occupied = COLORS.filter((c) => (p.properties[me]?.[c]?.length ?? 0) > 0)
+        colors = occupied.length > 0 ? occupied : COLORS
+      } else {
+        colors = card.colors!
+      }
       for (const c of colors) {
         btns.push(
-          <button key={`pp-${c}`} className="mdp-btn mdp-primary" onClick={() => void act('playProperty', { cardId: card.id, color: c })}>
+          <button key={`pp-${c}`} className="mdp-btn mdp-primary" style={{ background: COLOR_HEX[c], color: inkOn(c) }} onClick={() => void act('playProperty', { cardId: card.id, color: c })}>
             → {COLOR_LABEL[c]}
           </button>,
         )
@@ -446,6 +484,28 @@ function MyTable({
   const [moving, setMoving] = useState<string | null>(null)
   const props = p.properties[me]!
   const shown = COLORS.filter((c) => props[c].length > 0)
+
+  // The card currently being repositioned
+  const movingCard = moving
+    ? COLORS.flatMap((c) => props[c]).find((card) => card.id === moving) ?? null
+    : null
+
+  // Valid destination colors for a wildcard being moved:
+  // the two colors it belongs to, but exclude the slot it's already in
+  const validDestinations = (cardId: string): Color[] => {
+    const currentColor = COLORS.find((c) => props[c].some((card) => card.id === cardId))
+    const card = currentColor ? props[currentColor].find((c) => c.id === cardId) : undefined
+    if (!card) return []
+    if (card.wildAny) {
+      // Can move to any color the player already has cards in, or any color at all
+      const occupied = COLORS.filter((c) => props[c].length > 0)
+      return occupied.length > 1
+        ? occupied.filter((c) => c !== currentColor)
+        : COLORS.filter((c) => c !== currentColor)
+    }
+    return (card.colors ?? []).filter((c) => c !== currentColor)
+  }
+
   return (
     <div className="mdp-mytable">
       {shown.length === 0 && <span className="mdp-muted">your properties appear here</span>}
@@ -458,19 +518,38 @@ function MyTable({
             props[c]
               .filter((card) => card.kind === 'wild')
               .map((card) => (
-                <button key={card.id} className="mdp-wildmove" onClick={() => setMoving(moving === card.id ? null : card.id)}>
-                  move wild
+                <button
+                  key={card.id}
+                  className={`mdp-wildmove ${moving === card.id ? 'mdp-wildmove-active' : ''}`}
+                  onClick={() => setMoving(moving === card.id ? null : card.id)}
+                  title="Reposition this wildcard to another color"
+                >
+                  🔀 move
                 </button>
               ))}
         </div>
       ))}
-      {moving && onMoveWild && (
-        <div className="mdp-actions">
-          {COLORS.map((c) => (
-            <button key={c} className="mdp-btn" style={{ background: COLOR_HEX[c], color: inkOn(c) }} onClick={() => { onMoveWild(moving, c); setMoving(null) }}>
-              {COLOR_LABEL[c]}
-            </button>
-          ))}
+      {moving && movingCard && onMoveWild && (
+        <div className="mdp-wild-picker">
+          <div className="mdp-wild-picker-header">
+            <span>Move <strong>{movingCard.name}</strong> to…</span>
+            <button className="mdp-wild-picker-close" onClick={() => setMoving(null)}>✕</button>
+          </div>
+          <div className="mdp-wild-picker-opts">
+            {validDestinations(moving).map((c) => (
+              <button
+                key={c}
+                className="mdp-btn mdp-wild-dest"
+                style={{ background: COLOR_HEX[c], color: inkOn(c) }}
+                onClick={() => { onMoveWild(moving, c); setMoving(null) }}
+              >
+                {COLOR_LABEL[c]}
+              </button>
+            ))}
+            {validDestinations(moving).length === 0 && (
+              <span className="mdp-muted">no valid destination</span>
+            )}
+          </div>
         </div>
       )}
     </div>
