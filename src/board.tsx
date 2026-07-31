@@ -1,7 +1,7 @@
 import type { BoardUiProps } from '@boardr/sdk'
 import { Seat } from '@boardr/sdk/ui'
 import { COLOR_LABEL, COLORS, SET_SIZE, rentFor, HOUSE_RENT, HOTEL_RENT, type Card, type Color } from './deck'
-import { CardChip, COLOR_HEX, inkOn, HouseIcon, HotelIcon } from './cardUi'
+import { CardChip, COLOR_HEX, inkOn, SHORT_COLOR, HouseIcon, HotelIcon } from './cardUi'
 import type { MDPublic } from './logic'
 import './board.css'
 
@@ -17,7 +17,7 @@ function SetCard({ card, setColor }: { card: Card; setColor: Color }): React.JSX
         style={{ background: COLOR_HEX[setColor], color: inkOn(setColor) }}
         title={COLOR_LABEL[setColor]}
       >
-        <span>{COLOR_LABEL[setColor][0]}</span>
+        <span>{SHORT_COLOR[setColor]}</span>
       </div>
     )
   }
@@ -27,15 +27,14 @@ function SetCard({ card, setColor }: { card: Card; setColor: Color }): React.JSX
       <div
         className="md-setcard md-setcard-wild"
         style={{ background: 'linear-gradient(135deg,#d94f9a,#e8c33a,#2f8f4e)', color: '#fff' }}
-        title="Wild (any color)"
+        title="Wildcard (any color)"
       >
-        <span>★</span>
-        <span className="md-wild-badge md-wild-badge-any">any</span>
+        <span className="md-wild-initials">★ any</span>
       </div>
     )
   }
 
-  // Dual-color wildcard: show both colors, badge the "other" color
+  // Dual-color wildcard: show both colors cleanly without redundant text badge
   const [c1, c2] = card.colors!
   const altColor = c1 === setColor ? c2! : c1!
   return (
@@ -44,13 +43,11 @@ function SetCard({ card, setColor }: { card: Card; setColor: Color }): React.JSX
       style={{
         background: `linear-gradient(135deg, ${COLOR_HEX[c1!]} 0%, ${COLOR_HEX[c1!]} 45%, #1c1f24 45%, #1c1f24 55%, ${COLOR_HEX[c2!]} 55%, ${COLOR_HEX[c2!]} 100%)`,
         color: '#fff',
+        textShadow: '0 1px 2px rgba(0,0,0,0.8)',
       }}
-      title={`Wildcard: ${COLOR_LABEL[c1!]} / ${COLOR_LABEL[c2!]} — placed as ${COLOR_LABEL[setColor]}`}
+      title={`Wildcard: ${COLOR_LABEL[c1!]} / ${COLOR_LABEL[c2!]} — placed as ${COLOR_LABEL[setColor]} (can also be ${COLOR_LABEL[altColor]})`}
     >
-      <span className="md-wild-initials">{COLOR_LABEL[c1!][0]}/{COLOR_LABEL[c2!][0]}</span>
-      <span className="md-wild-badge" style={{ background: COLOR_HEX[altColor], color: inkOn(altColor) }}>
-        also {COLOR_LABEL[altColor]}
-      </span>
+      <span className="md-wild-initials">{SHORT_COLOR[c1!]}/{SHORT_COLOR[c2!]}</span>
     </div>
   )
 }

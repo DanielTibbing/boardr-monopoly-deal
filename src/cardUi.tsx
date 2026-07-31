@@ -13,6 +13,19 @@ export const COLOR_HEX: Record<Color, string> = {
   utility: '#9aa0a6',
 }
 
+export const SHORT_COLOR: Record<Color, string> = {
+  brown: 'BR',
+  lightblue: 'LB',
+  pink: 'P',
+  orange: 'O',
+  red: 'R',
+  yellow: 'Y',
+  green: 'G',
+  darkblue: 'DB',
+  railroad: 'RR',
+  utility: 'U',
+}
+
 /** ink that reads on a given color chip */
 export function inkOn(color: Color): string {
   return color === 'lightblue' || color === 'yellow' || color === 'utility' ? '#12140d' : '#fff'
@@ -46,7 +59,7 @@ export function CardChip({
       style = { background: 'linear-gradient(135deg,#d94f9a,#e8c33a,#2f8f4e)', color: '#fff' }
     } else {
       const [c1, c2] = card.colors!
-      body = <span>{COLOR_LABEL[c1!][0]}/{COLOR_LABEL[c2!][0]}</span>
+      body = <span>{SHORT_COLOR[c1!]}/{SHORT_COLOR[c2!]}</span>
       style = {
         background: `linear-gradient(135deg, ${COLOR_HEX[c1!]} 0%, ${COLOR_HEX[c1!]} 48%, #1c1f24 48%, #1c1f24 52%, ${COLOR_HEX[c2!]} 52%, ${COLOR_HEX[c2!]} 100%)`,
         color: '#fff',

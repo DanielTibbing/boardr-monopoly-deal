@@ -68,18 +68,13 @@
 
 /* Individual card chips inside a set (small row, secondary info) */
 .md-setcard {
-  display: inline-flex; align-items: center; justify-content: center; flex-direction: column;
-  gap: 2px; border-radius: 5px; font-weight: 700; font-size: 0.62rem;
-  min-width: 1.6rem; height: 1.9rem; padding: 0 3px; position: relative;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 5px; font-weight: 800; font-size: 0.65rem;
+  min-width: 1.6rem; height: 1.9rem; padding: 0 4px; position: relative;
   text-shadow: 0 1px 2px rgba(0,0,0,0.4);
 }
-.md-setcard-wild { min-width: 3rem; flex-direction: row; gap: 3px; }
-.md-wild-initials { font-size: 0.58rem; font-weight: 900; flex-shrink: 0; }
-.md-wild-badge {
-  font-size: 0.52rem; font-weight: 700; padding: 1px 4px; border-radius: 3px;
-  white-space: nowrap; line-height: 1.4; text-shadow: none;
-}
-.md-wild-badge-any { background: rgba(255,255,255,0.25); color: #fff; }
+.md-setcard-wild { min-width: 2.6rem; }
+.md-wild-initials { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.02em; }
 
 
 
