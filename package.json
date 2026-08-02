@@ -1,7 +1,7 @@
 {
   "name": "boardr-monopoly-deal",
   "private": true,
-  "version": "0.4.4",
+  "version": "0.5.0",
   "type": "module",
   "scripts": {
     "build": "boardr build",
@@ -10,13 +10,15 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@boardr/sdk": "^0.2.0"
+    "@boardr/sdk": "^0.3.0"
   },
   "devDependencies": {
-    "@boardr/cli": "^0.2.0",
-    "@boardr/testkit": "^0.2.0",
+    "@boardr/cli": "^0.3.0",
+    "@boardr/testkit": "^0.3.0",
     "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.2.4",
     "react": "^19.1.0",
+    "react-dom": "^19.2.8",
     "typescript": "^5.8.0",
     "vitest": "^3.2.0"
   }

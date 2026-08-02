@@ -79,6 +79,18 @@ describe('setup & turn basics', () => {
     expect(pub(m).properties['p0']!.red).toHaveLength(1)
   })
 
+  it('refuses to bank property and wild cards', () => {
+    const m = craft(2, (s) => {
+      s.secret['p0']!.hand = [
+        prop('red'),
+        { id: 'w1', kind: 'wild', value: 3, name: 'Red/Yellow', colors: ['red', 'yellow'] },
+      ]
+    })
+    expect(m.dispatch('bank', { cardId: hand(m, 'p0')[0]!.id }, 'p0')).toMatchObject({ ok: false })
+    expect(m.dispatch('bank', { cardId: hand(m, 'p0')[1]!.id }, 'p0')).toMatchObject({ ok: false })
+    expect(pub(m).bank['p0']).toHaveLength(0)
+  })
+
   it('enforces the 7-card hand limit at end of turn', () => {
     const m = craft(2, (s) => {
       s.secret['p0']!.hand = Array.from({ length: 9 }, () => money(1))
@@ -120,6 +132,28 @@ describe('charges & payment', () => {
     expect(pub(m).phase).toBe('playing')
     expect(pub(m).bank['p0']!.reduce((s, c) => s + c.value, 0)).toBe(5)
     expect(pub(m).bank['p1']!.reduce((s, c) => s + c.value, 0)).toBe(1)
+  })
+
+  it('pays a debt with a wild card off the table at its printed value', () => {
+    const m = craft(2, (s) => {
+      s.secret['p0']!.hand = [action('debtCollector')]
+      setProps(s, 'p1', 'red', [
+        { id: 'w1', kind: 'wild', value: 3, name: 'Red/Yellow', colors: ['red', 'yellow'] },
+        prop('red'),
+        prop('red'),
+      ])
+    })
+    m.dispatch('debtCollector', { cardId: hand(m, 'p0')[0]!.id, target: 'p1' }, 'p0')
+    m.dispatch('accept', undefined, 'p1')
+    // owes 5: the wild ($3) plus one red property ($2) covers it
+    const red = pub(m).properties['p1']!.red!
+    const wild = red.find((c) => c.kind === 'wild')!
+    const single = red.find((c) => c.kind === 'property')!
+    expect(m.dispatch('pay', { cardIds: [wild.id, single.id] }, 'p1').ok).toBe(true)
+    // the wild moves to p0's table as a property, never into a bank
+    expect(pub(m).bank['p0']).toHaveLength(0)
+    expect(pub(m).properties['p0']!.red).toHaveLength(2)
+    expect(pub(m).properties['p1']!.red).toHaveLength(1)
   })
 
   it('no change: paying a $5 for a $2 debt gives the whole $5', () => {

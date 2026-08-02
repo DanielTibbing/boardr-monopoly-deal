@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { PhoneUiProps } from '@boardr/sdk'
 import {
+  bankable,
   canBuildOn,
   COLOR_LABEL,
   COLORS,
@@ -225,7 +226,7 @@ export default function Phone({ playerID, view, meta, dispatch }: PhoneUiProps<P
     }
     const btns: React.JSX.Element[] = []
 
-    if (card.value > 0) {
+    if (bankable(card)) {
       btns.push(
         <button key="bank" className="mdp-btn" onClick={() => void act('bank', { cardId: card.id })}>
           Bank ${card.value}M

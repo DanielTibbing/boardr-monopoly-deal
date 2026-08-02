@@ -405,7 +405,7 @@ export default defineGame<MDState>({
         const cardId = (args as { cardId?: string } | undefined)?.cardId
         const card = state.secret[ctx.playerID]!.hand.find((c) => c.id === cardId)
         if (!card) return ctx.invalid('that card is not in your hand')
-        if (!bankable(card)) return ctx.invalid('property wildcards have no cash value')
+        if (!bankable(card)) return ctx.invalid('only money, action and rent cards can be banked')
         takeFromHand(state, ctx.playerID, card.id)
         state.public.bank[ctx.playerID]!.push(card)
         state.public.playsMade++

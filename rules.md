@@ -36,7 +36,7 @@ If a set with a House or Hotel is broken up or paid away, the building can't sta
 
 # Paying
 
-Pay from the cards **on your table** — never from your hand. There's **no change**: a $5M card settles a $2M debt in full. If you can't cover a debt, hand over everything you have and owe nothing more.
+Pay from the cards **on your table** — never from your hand. Property and wild cards can't be banked, but the value printed in their corner still counts when you pay with them (the rainbow wildcard is worth nothing). There's **no change**: a $5M card settles a $2M debt in full. If you can't cover a debt, hand over everything you have and owe nothing more.
 
 # Running out of cards
 

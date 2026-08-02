@@ -26,10 +26,11 @@
 
 /* ── Pending / log overlay ─────────────────────────────────────────────────── */
 .md-pending, .md-log {
-  padding: 0.7rem 1rem; border-radius: 12px; background: rgba(242,177,61,0.1);
+  padding: 0.7rem 1rem; border-radius: 12px; background: rgba(30,26,14,0.95);
   border: 1px solid rgba(242,177,61,0.4); display: flex; flex-direction: column; gap: 0.2rem;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.55);
 }
-.md-log { background: rgba(255,255,255,0.04); border-color: #2b3427; color: #c8cebe; }
+.md-log { background: rgba(16,20,15,0.95); border-color: #2b3427; color: #c8cebe; }
 
 /* ── Layout: seats ─────────────────────────────────────────────────────────── */
 .md-seats {
@@ -38,71 +39,72 @@
   min-height: 32rem;
   width: 100%;
 }
+/*
+ * Seats size to their content and stay shallow, so a busy table grows
+ * sideways into the unused horizontal space instead of colliding in the
+ * middle. Side seats (3–4 players) are rotated 90°, so their width runs
+ * along the table edge — cap it to fit the table height.
+ */
 .md-seat {
   background: rgba(0,0,0,0.35);
   border: 2px solid rgba(255,255,255,0.09);
   border-radius: 14px;
-  padding: 0.8rem 1rem;
-  min-width: 19rem;
-  max-width: 22rem;
-  width: 100%; /* prevent bleed on narrow projectors */
+  padding: 0.6rem 0.8rem;
+  width: max-content;
+  max-width: min(30rem, 60vh);
   box-sizing: border-box;
 }
+.md-seat-wide { max-width: min(48rem, 92vw); }
 .md-active { border-color: #f2b13d; box-shadow: 0 0 20px rgba(242,177,61,0.18); }
 
-.md-seat-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.45rem; }
+.md-seat-top { display: flex; justify-content: space-between; align-items: baseline; gap: 1.5rem; margin-bottom: 0.4rem; }
 .md-name { font-weight: 700; font-family: 'Russo One', 'Inter', sans-serif; font-size: 0.95rem; }
-.md-sets { color: #f4c86e; font-size: 0.83rem; }
+.md-sets { color: #f4c86e; font-size: 0.83rem; white-space: nowrap; }
 
-/* ── Property sets ─────────────────────────────────────────────────────────── */
-.md-sets-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+/* ── Property sets: one compact line per set ───────────────────────────────── */
+.md-sets-row { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .md-set {
-  display: flex; flex-direction: column; gap: 0.3rem;
-  border: 1px solid; border-radius: 8px; padding: 0.25rem 0.4rem;
+  display: flex; align-items: center; gap: 0.3rem;
+  border: 1px solid; border-radius: 8px; padding: 0.15rem 0.35rem;
 }
 .md-set.md-full { box-shadow: 0 0 0 2px rgba(74,222,128,0.5) inset; }
-.md-set-header { display: flex; align-items: center; gap: 0.3rem; }
-.md-set-chip { font-size: 0.7rem; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 5px; }
-.md-set-count { font-size: 0.78rem; color: #c8cebe; }
-.md-set-cards { display: flex; gap: 3px; flex-wrap: wrap; }
+.md-set-chip { font-size: 0.68rem; font-weight: 700; padding: 0.1rem 0.35rem; border-radius: 5px; }
+.md-set-count { font-size: 0.75rem; color: #c8cebe; white-space: nowrap; }
+.md-set-cards { display: flex; gap: 3px; }
 
-/* Individual card chips inside a set (small row, secondary info) */
+/* Individual card chips inside a set, with payment value in the corner */
 .md-setcard {
   display: inline-flex; align-items: center; justify-content: center;
   border-radius: 5px; font-weight: 800; font-size: 0.65rem;
-  min-width: 1.6rem; height: 1.9rem; padding: 0 4px; position: relative;
+  min-width: 1.7rem; height: 1.9rem; padding: 0 4px; position: relative;
   text-shadow: 0 1px 2px rgba(0,0,0,0.4);
 }
-.md-setcard-wild { min-width: 2.6rem; }
+.md-setcard-wild { min-width: 2.7rem; }
 .md-wild-initials { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.02em; }
+.md-setcard-val {
+  position: absolute; right: 1px; bottom: 0; font-size: 0.58rem; font-weight: 700;
+  opacity: 0.95; text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+}
 
 
 
-/* ── Center area ───────────────────────────────────────────────────────────── */
+/* ── Center area (positioned by tableCenter() inline style) ────────────────── */
 .md-center-area {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  max-width: 22rem;
   z-index: 2;
 }
+.md-center-area > * { max-width: 22rem; }
 
 /* ── Bank row ──────────────────────────────────────────────────────────────── */
 .md-bank-row {
   display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  margin-top: 0.6rem;
-  padding-top: 0.5rem;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.45rem;
+  padding-top: 0.4rem;
   border-top: 1px dashed rgba(255,255,255,0.08);
 }
 .md-bank-label {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: #b0bba8;
   font-weight: 600;
   text-transform: uppercase;

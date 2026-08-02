@@ -1,5 +1,5 @@
 import type { BoardUiProps } from '@boardr/sdk'
-import { Seat } from '@boardr/sdk/ui'
+import { Seat, tableCenter } from '@boardr/sdk/ui'
 import { COLOR_LABEL, COLORS, SET_SIZE, rentFor, HOUSE_RENT, HOTEL_RENT, type Card, type Color } from './deck'
 import { CardChip, COLOR_HEX, inkOn, SHORT_COLOR, HouseIcon, HotelIcon } from './cardUi'
 import type { MDPublic } from './logic'
@@ -9,15 +9,19 @@ type BoardView = { public: MDPublic }
 
 /** A single card in a set on the board — regular or wildcard */
 function SetCard({ card, setColor }: { card: Card; setColor: Color }): React.JSX.Element {
+  // the payment value in the corner matters when sizing up a target for
+  // rent/debt — show it on the table too (rainbow wild is worth nothing)
+  const val = card.value > 0 ? <span className="md-setcard-val">${card.value}</span> : null
   if (card.kind !== 'wild') {
     // Plain property card
     return (
       <div
         className="md-setcard"
         style={{ background: COLOR_HEX[setColor], color: inkOn(setColor) }}
-        title={COLOR_LABEL[setColor]}
+        title={`${COLOR_LABEL[setColor]} — $${card.value}M`}
       >
         <span>{SHORT_COLOR[setColor]}</span>
+        {val}
       </div>
     )
   }
@@ -27,7 +31,7 @@ function SetCard({ card, setColor }: { card: Card; setColor: Color }): React.JSX
       <div
         className="md-setcard md-setcard-wild"
         style={{ background: 'linear-gradient(135deg,#d94f9a,#e8c33a,#2f8f4e)', color: '#fff' }}
-        title="Wildcard (any color)"
+        title="Wildcard (any color) — no monetary value"
       >
         <span className="md-wild-initials">★ any</span>
       </div>
@@ -45,9 +49,10 @@ function SetCard({ card, setColor }: { card: Card; setColor: Color }): React.JSX
         color: '#fff',
         textShadow: '0 1px 2px rgba(0,0,0,0.8)',
       }}
-      title={`Wildcard: ${COLOR_LABEL[c1!]} / ${COLOR_LABEL[c2!]} — placed as ${COLOR_LABEL[setColor]} (can also be ${COLOR_LABEL[altColor]})`}
+      title={`Wildcard: ${COLOR_LABEL[c1!]} / ${COLOR_LABEL[c2!]} — placed as ${COLOR_LABEL[setColor]} (can also be ${COLOR_LABEL[altColor]}) — $${card.value}M`}
     >
       <span className="md-wild-initials">{SHORT_COLOR[c1!]}/{SHORT_COLOR[c2!]}</span>
+      {val}
     </div>
   )
 }
@@ -59,6 +64,7 @@ function Tableau({
   name,
   active,
   sets,
+  wide,
 }: {
   bank: Card[]
   properties: Record<Color, Card[]>
@@ -66,10 +72,11 @@ function Tableau({
   name: string
   active: boolean
   sets: number
+  wide: boolean
 }): React.JSX.Element {
   const bankTotal = bank.reduce((s, c) => s + c.value, 0)
   return (
-    <div className={`md-seat ${active ? 'md-active' : ''}`}>
+    <div className={`md-seat ${active ? 'md-active' : ''} ${wide ? 'md-seat-wide' : ''}`}>
       <div className="md-seat-top">
         <span className="md-name">{name}</span>
         <span className="md-sets">
@@ -90,17 +97,16 @@ function Tableau({
               key={c}
               className={`md-set ${full ? 'md-full' : ''}`}
               style={{ borderColor: COLOR_HEX[c] }}
+              title={`${COLOR_LABEL[c]} — rent $${rentVal}M`}
             >
-              <div className="md-set-header">
-                <span className="md-set-chip" style={{ background: COLOR_HEX[c], color: inkOn(c) }}>
-                  {COLOR_LABEL[c]}
-                </span>
-                <span className="md-set-count">
-                  {have}/{SET_SIZE[c]} · ${rentVal}M
-                  {buildings[c].house && <HouseIcon size={13} />}
-                  {buildings[c].hotel && <HotelIcon size={13} />}
-                </span>
-              </div>
+              <span className="md-set-chip" style={{ background: COLOR_HEX[c], color: inkOn(c) }}>
+                {SHORT_COLOR[c]}
+              </span>
+              <span className="md-set-count">
+                {have}/{SET_SIZE[c]}·${rentVal}M
+                {buildings[c].house && <HouseIcon size={12} />}
+                {buildings[c].hotel && <HotelIcon size={12} />}
+              </span>
               <div className="md-set-cards">
                 {properties[c].map((card) => (
                   <SetCard key={card.id} card={card} setColor={c} />
@@ -112,7 +118,7 @@ function Tableau({
         {COLORS.every((c) => properties[c].length === 0) && <span className="md-muted">no property yet</span>}
       </div>
       <div className="md-bank-row">
-        <span className="md-bank-label">Bank (${bankTotal}M):</span>
+        <span className="md-bank-label">Bank</span>
         <div className="md-chips">
           {bank.map((card) => (
             <CardChip key={card.id} card={card} size="sm" />
@@ -159,11 +165,12 @@ export default function Board({ view, meta }: BoardUiProps<BoardView>): React.JS
               buildings={p.buildings[pl.id]!}
               active={pl.id === p.turnPlayer}
               sets={p.setsWon[pl.id] ?? 0}
+              wide={players.length <= 2}
             />
           </Seat>
         ))}
 
-        <div className="md-center-area">
+        <div className="md-center-area" style={tableCenter(players.length)}>
           {pend ? (
             <div className="md-pending">
               <strong>{p.lastEvent}</strong>

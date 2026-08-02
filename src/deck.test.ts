@@ -27,11 +27,25 @@ describe('deck', () => {
     expect(buildDeck().map((c) => c.id)).toEqual(buildDeck().map((c) => c.id))
   })
 
-  it('property wildcards cannot be banked, everything else with value can', () => {
+  it('property and wild cards cannot be banked, everything else with value can', () => {
     const deck = buildDeck()
     expect(deck.filter((c) => c.kind === 'wild').every((c) => !bankable(c))).toBe(true)
+    expect(deck.filter((c) => c.kind === 'property').every((c) => !bankable(c))).toBe(true)
     expect(deck.filter((c) => c.kind === 'money').every(bankable)).toBe(true)
     expect(deck.filter((c) => c.kind === 'action').every(bankable)).toBe(true)
+  })
+
+  it('dual-colour wilds carry the value printed on the card; the rainbow wild does not', () => {
+    const deck = buildDeck()
+    const byName = (name: string) => deck.filter((c) => c.name === name)
+    expect(byName('Dark Blue/Green').map((c) => c.value)).toEqual([4])
+    expect(byName('Light Blue/Brown').map((c) => c.value)).toEqual([1])
+    expect(byName('Pink/Orange').map((c) => c.value)).toEqual([2, 2])
+    expect(byName('Red/Yellow').map((c) => c.value)).toEqual([3, 3])
+    expect(byName('Railroad/Green').map((c) => c.value)).toEqual([4])
+    expect(byName('Railroad/Light Blue').map((c) => c.value)).toEqual([4])
+    expect(byName('Railroad/Utility').map((c) => c.value)).toEqual([2])
+    expect(byName('Wild (any)').every((c) => c.value === 0)).toBe(true)
   })
 
   it('setComplete respects each colour’s size', () => {

@@ -124,7 +124,7 @@ export type CardKind = 'money' | 'property' | 'wild' | 'rent' | 'action'
 export interface Card {
   id: string
   kind: CardKind
-  /** bank value in $M; 0 = cannot be banked (property wildcards) */
+  /** monetary value in $M, used when paying debts/rent; 0 = no monetary value (rainbow wildcard) */
   value: number
   name: string
   /** property: its single color */
@@ -150,9 +150,13 @@ export function rentFor(color: Color, count: number): number {
   return schedule[Math.min(count, schedule.length) - 1] ?? 0
 }
 
-/** a card is bankable (as money) when it has a positive cash value */
+/**
+ * only money, action and rent cards may be placed in the bank. Property and
+ * wild cards still carry a monetary value for paying debts, but live on the
+ * table as properties — they can never be banked.
+ */
 export function bankable(card: Card): boolean {
-  return card.value > 0
+  return card.value > 0 && card.kind !== 'property' && card.kind !== 'wild'
 }
 
 let seq = 0
@@ -190,20 +194,27 @@ export function buildDeck(): Card[] {
     }
   }
 
-  // property wildcards (11): dual-colour pairs + two multi-colour
-  const wilds: Array<[Color, Color]> = [
-    ['darkblue', 'green'],
-    ['lightblue', 'brown'],
-    ['pink', 'orange'],
-    ['pink', 'orange'],
-    ['red', 'yellow'],
-    ['red', 'yellow'],
-    ['railroad', 'green'],
-    ['railroad', 'lightblue'],
-    ['railroad', 'utility'],
+  // property wildcards (11): dual-colour pairs + two multi-colour.
+  // Each dual-colour wild carries the monetary value printed on the physical
+  // card; the rainbow wild has no monetary value.
+  const wilds: Array<[Color, Color, number]> = [
+    ['darkblue', 'green', 4],
+    ['lightblue', 'brown', 1],
+    ['pink', 'orange', 2],
+    ['pink', 'orange', 2],
+    ['red', 'yellow', 3],
+    ['red', 'yellow', 3],
+    ['railroad', 'green', 4],
+    ['railroad', 'lightblue', 4],
+    ['railroad', 'utility', 2],
   ]
-  for (const [a, b] of wilds) {
-    deck.push(mk({ kind: 'wild', value: 0, name: `${COLOR_LABEL[a]}/${COLOR_LABEL[b]}`, colors: [a, b] }, 'wild'))
+  for (const [a, b, value] of wilds) {
+    deck.push(
+      mk(
+        { kind: 'wild', value, name: `${COLOR_LABEL[a]}/${COLOR_LABEL[b]}`, colors: [a, b] },
+        'wild',
+      ),
+    )
   }
   for (let i = 0; i < 2; i++) {
     deck.push(mk({ kind: 'wild', value: 0, name: 'Wild (any)', colors: [], wildAny: true }, 'wildany'))
